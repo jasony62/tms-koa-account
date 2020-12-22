@@ -1,0 +1,29 @@
+{
+  "name": "tms-koa-account",
+  "version": "0.0.1",
+  "description": "tms-koa控制器插件，账号管理。",
+  "main": "index.js",
+  "files": [
+    "index.js"
+  ],
+  "peerDependencies": {
+    "tms-koa": "^0.0.61"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jasony62/tms-koa-account.git"
+  },
+  "keywords": [],
+  "author": "jasony62",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jasony62/tms-koa-account/issues"
+  },
+  "homepage": "https://github.com/jasony62/tms-koa-account#readme",
+  "dependencies": {
+    "@log4js-node/log4js-api": "^1.0.2"
+  }
+}
