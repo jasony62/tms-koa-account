@@ -4,7 +4,10 @@
   "description": "tms-koa控制器插件，账号管理。",
   "main": "index.js",
   "files": [
-    "index.js"
+    "index.js",
+    "config.js",
+    "admin",
+    "models"
   ],
   "peerDependencies": {
     "tms-koa": "^0.0.61"

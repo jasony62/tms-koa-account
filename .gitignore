@@ -104,4 +104,4 @@ dist
 .tern-port
 
 # 项目
-/demo
+*.local.js
