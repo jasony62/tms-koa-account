@@ -61,13 +61,16 @@ module.exports = {
 
 # 账号对象固定字段
 
-| 字段            | 说明                 | 类型     | 必填 |
-| --------------- | -------------------- | -------- | ---- |
-| \_id            | 系统自动生成 id      | ObjectId | 是   |
-| username        | 用户账户名，不可重复 | string   | 是   |
-| password        |                      | string   | 是   |
-| isAdmin         | 是否为管理员         | boolean  | 否   |
-| allowMultiLogin | 是否允许多点登录     | boolean  | 否   |
+| 字段              | 说明                 | 类型     | 必填 |
+| ----------------- | -------------------- | -------- | ---- |
+| \_id              | 系统自动生成 id       | ObjectId | 是   |
+| username          | 用户账户名，不可重复  | string   | 是   |
+| password          |                      | string   | 是   |
+| salt              |  密码加密密钥         | string   | 是   |
+| pwdErrNum         |  密码错误次数         | int      | 否   |
+| authLockExp       |  授权锁截止时间       | string   | 否   |
+| isAdmin           | 是否为管理员          | boolean  | 否   |
+| allowMultiLogin   | 是否允许多点登录      | boolean  | 否   |
 
 密码应该不用明文存储。
 

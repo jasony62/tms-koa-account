@@ -16,6 +16,7 @@ module.exports = async function (ctx) {
         return [true, tmsClient]
       }
     }
+    let msg = '没有找到匹配的账号'
     if (mongodb && typeof mongodb === 'object' && mongodb.disabled !== true) {
       /**mongodb存储账号 */
       const { name, database, collection } = mongodb
@@ -26,15 +27,16 @@ module.exports = async function (ctx) {
         collection
       )
       let found = await modelAccount.authenticate(username, password)
-      if (found) {
+      if (found[0] === true) {
+        found = found[1]
         let tmsClient = new Client(
           username,
-          { username },
+          found,
           found.isAdmin === true,
           found.allowMultiLogin === true
         )
         return [true, tmsClient]
-      }
+      } else msg = found[1]
     } else if (Array.isArray(accounts) && accounts.length) {
       /**配置文件存储账号 */
       let found = accounts.find(
@@ -53,5 +55,5 @@ module.exports = async function (ctx) {
     }
   }
 
-  return [false, '没有找到匹配的账号']
+  return [false, msg]
 }

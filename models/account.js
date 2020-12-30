@@ -1,4 +1,6 @@
 const ObjectId = require('mongodb').ObjectId
+const AccountConfig = require('../config')
+const { PasswordProcess: ProcessPwd } = require('./processPwd')
 
 /**
  * 将指定的page和size参数转换为skip和limit参互
@@ -51,9 +53,55 @@ class Account {
       .updateOne({ _id: ObjectId(id) }, { $set: { forbidden: false } })
       .then(({ modifiedCount }) => modifiedCount === 1)
   }
-  async authenticate(username, password) {
-    const account = await this.cl.findOne({ username, password })
-    return account
+  async updateOne(where, updata) {
+    return this.cl
+      .updateOne(where, { $set: updata })
+      .then(({ modifiedCount }) => modifiedCount === 1)
+  }
+  async findOne(where) {
+    return this.cl.findOne(where)
+  }
+  async authenticate(account, password) {
+    const oAccount = await this.findOne({ account })
+    if (!oAccount) return [false, "账号或密码错误"]
+    if (oAccount.forbidden !== false) return [false, "禁止登录"]
+    //
+    const current = Date.now()
+    if (oAccount.authLockExp && current < oAccount.authLockExp) {
+      return [false, `登录过于频繁，请在${parseInt((oAccount.authLockExp - current) / 1000)}秒后再次尝试`]
+    }
+    //可以登录检查密码
+    const proPwd = new ProcessPwd(password, oAccount.salt)
+    if (proPwd.compare(oAccount.password) === false) {
+      let msg = "账号或密码错误"
+      // 记录失败次数
+      const pwdErrNum = oAccount.pwdErrNum++
+      let updata = { pwdErrNum }
+      if (AccountConfig.taConfig) {
+        const taConfig = AccountConfig.taConfig
+        if (
+          new RegExp(/^[1-9]\d*$/).test(taConfig.pwdErrMaxNum) && 
+          new RegExp(/^[1-9]\d*$/).test(taConfig.authLockDUR)
+        ) {
+          if (pwdErrNum >= parseInt(taConfig.pwdErrMaxNum)) { // 密码错误次数超限后，账号锁定
+            updata.authLockExp = current + parseInt(taConfig.authLockDUR)
+            msg += `; 账号锁定 ${parseInt(taConfig.authLockDUR)} 秒`
+          } else {
+            msg += `, 账号即将被锁定。剩余次数【${parseInt(taConfig.pwdErrMaxNum) - pwdErrNum}】`
+          }
+        }
+      }
+      await this.updateOne({ _id: oAccount._id }, updata)
+      return [false, msg]
+    }
+    // 密码正确需要重置密码错误次数
+    await this.updateOne({ _id: oAccount._id }, {pwdErrNum: 0, authLockExp: 0, lastLoginTime: current})
+
+    const {_id, password: pwd, salt, ...newAccount} = oAccount
+    return [true, newAccount]
+  }
+  async getAccount(account) {
+    return this.findOne({account})
   }
 }
 
