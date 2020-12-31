@@ -8,12 +8,10 @@ class PasswordValidator {
     this.pwd = pwd
     if (Object.prototype.toString.call(config) !== '[object Object]') config = {}
     this.config = {
-      min: config.min ? config.min : 8, // 密码最小长度
-      max: config.max ? config.max : 20, // 密码最大长度
+      min: config.min ? config.min : 0, // 密码最小长度
+      max: config.max ? config.max : 100, // 密码最大长度
       pwdBlack: Array.isArray(config.pwdBlack) ? config.pwdBlack : [], // 密码黑名单
       hasSpaces: config.hasSpaces ? true : false, // 是否包含空格
-      KeyboardSequence: config.KeyboardSequence ? true : false, // 是否检查键盘序
-      pwdContainsAccount: config.pwdContainsAccount ? true : false // 检查密码中是否包含账号
     }
     
     this.containProjects = []
@@ -36,7 +34,7 @@ class PasswordValidator {
   validate() {
     const PwdValidator = require('password-validator')
 
-    const { min, max, pwdBlack, hasSpaces, KeyboardSequence, pwdContainsAccount } = this.config
+    const { min, max, pwdBlack, hasSpaces } = this.config
     
     const schema = new PwdValidator()
     schema
@@ -45,28 +43,28 @@ class PasswordValidator {
     if (hasSpaces === false) schema.has().not().spaces()
     if (pwdBlack.length > 0) schema.is().not().oneOf(pwdBlack)
     if (schema.validate(this.pwd) === false) return [false, "密码格式错误或为风险密码"]
-    
+
     //
     if (this.containProjects) {
       let passNum = 0
-      let msg = ""
+      let msg = "密码缺少必须项"
       for (const project of this.containProjects) {
         const schemaPj = new PwdValidator()
         schemaPj.has()[project]()
-        if (schemaPj.validate(this.pwd) !== false) passNum++
+        if (schemaPj.validate(this.pwd) !== false) 
+          passNum++
+        else
+          msg += `【${project}】`
       }
-      if (passNum < this.checkProjectsLength) return [false, "密码缺少必须项"]
+      if (passNum < this.checkProjectsLength) return [false, msg]
     }
-    
-
-    // 过滤账号相关性 如果改变账号字符顺序以及大小写，如果与账号的匹配字符大于账号中字符数量-2个返回false
-
-    // 机械键盘序 口令中不能包括连续的3个或3个以上键盘键位的字符,包括正、反、斜方向的顺序
 
     return [true]
   }
 }
 
+const SALT = Symbol('salt')
+const HASH = Symbol('hash')
 class PasswordProcess {
   constructor(myPlaintextPassword, salt) {
     this.myPlaintextPassword = myPlaintextPassword
@@ -74,27 +72,27 @@ class PasswordProcess {
   }
 
   get hash() {
-    if (!this.pwdHash) 
-      this.pwdHash = this.getPwdHash(this.myPlaintextPassword, this.salt)
+    if (!this[HASH]) 
+      this[HASH] = this.getPwdHash(this.myPlaintextPassword)
     
-    return this.pwdHash
+    return this[HASH]
   }
 
   get salt() {
-    return this.salt
+    return this[SALT]
   }
 
   set salt(value) {
-    this.salt = value
+    this[SALT] = value
   }
 
   getPwdHash(pwd) {
+    if (!this.salt) throw "未找到加密密钥"
     return Crypto.createHash('sha256').update(pwd + this.salt).digest('hex')
   }
 
   compare(otherPlaintextPassword) {
-    const otherPwdHash = this.getPwdHash(otherPlaintextPassword)
-    return this.hash === otherPwdHash
+    return this.hash === otherPlaintextPassword
   }
 
   static getSalt(length = 16) {
@@ -103,7 +101,7 @@ class PasswordProcess {
   }
 
   pwdStrengthCheck() {
-    let { pwdStrengthCheck } = AccountConfig.taConfig
+    let { pwdStrengthCheck } = AccountConfig.pwdConfig
     if (
       Object.prototype.toString.call(pwdStrengthCheck) !== '[object Object]' || 
       Object.keys(pwdStrengthCheck).length === 0

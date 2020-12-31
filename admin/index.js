@@ -141,7 +141,7 @@ class Admin extends Ctrl {
     let userInfo = this.request.body
     if (["password", "username", "nickname"].every(v => userInfo[v]) === false) return new ResultFault("用户信息不完整")
     
-    let {username: account, password, nickname} = userInfo
+    let {username: account, password, nickname, isAdmin, allowMultiLogin, ...other} = userInfo
     // 检查账号是否已存在
     const rst = await modelAccountImpl.getAccount(account)
     if (rst) return new ResultFault("账号已存在")
@@ -154,7 +154,25 @@ class Admin extends Ctrl {
     pwdProcess.salt = salt
     const pwdHash = pwdProcess.hash
     // 
-    const newAccount = {account, password: pwdHash, nickname, create_at: Date.now()}
+    let newAccount = {
+      account, 
+      password: pwdHash, 
+      salt,
+      nickname, 
+      isAdmin: new RegExp(/^true$/).test(isAdmin) ? true : false,
+      allowMultiLogin: new RegExp(/^true$/).test(allowMultiLogin) ? true : false,
+      create_at: Date.now()
+    }
+    if (
+      AccountConfig.mongodb && 
+      AccountConfig.disabled !== true && 
+      Object.prototype.toString.call(AccountConfig.mongodb.schema) === '[object Object]'
+    ) {
+      const otherData = Object.keys(other)
+        .filter( key => AccountConfig.mongodb.schema[key] )
+        .reduce( (res, key) => (res[key] = other[key], res), {} )
+      Object.assign(newAccount, otherData) 
+    }
     const result = await modelAccountImpl.create(newAccount)
     return new ResultData(result)
   }

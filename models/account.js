@@ -64,7 +64,7 @@ class Account {
   async authenticate(account, password) {
     const oAccount = await this.findOne({ account })
     if (!oAccount) return [false, "账号或密码错误"]
-    if (oAccount.forbidden !== false) return [false, "禁止登录"]
+    if (oAccount.forbidden === true) return [false, "禁止登录"]
     //
     const current = Date.now()
     if (oAccount.authLockExp && current < oAccount.authLockExp) {
@@ -75,19 +75,20 @@ class Account {
     if (proPwd.compare(oAccount.password) === false) {
       let msg = "账号或密码错误"
       // 记录失败次数
-      const pwdErrNum = oAccount.pwdErrNum++
+      const pwdErrNum = !oAccount.pwdErrNum ? 1 : oAccount.pwdErrNum * 1 + 1
       let updata = { pwdErrNum }
-      if (AccountConfig.taConfig) {
-        const taConfig = AccountConfig.taConfig
+      if (AccountConfig.pwdConfig) {
+        const pwdConfig = AccountConfig.pwdConfig
         if (
-          new RegExp(/^[1-9]\d*$/).test(taConfig.pwdErrMaxNum) && 
-          new RegExp(/^[1-9]\d*$/).test(taConfig.authLockDUR)
+          new RegExp(/^[1-9]\d*$/).test(pwdConfig.pwdErrMaxNum) && 
+          new RegExp(/^[1-9]\d*$/).test(pwdConfig.authLockDUR)
         ) {
-          if (pwdErrNum >= parseInt(taConfig.pwdErrMaxNum)) { // 密码错误次数超限后，账号锁定
-            updata.authLockExp = current + parseInt(taConfig.authLockDUR)
-            msg += `; 账号锁定 ${parseInt(taConfig.authLockDUR)} 秒`
+          if (pwdErrNum >= parseInt(pwdConfig.pwdErrMaxNum)) { // 密码错误次数超限后，账号锁定
+            updata.authLockExp = current + (pwdConfig.authLockDUR * 1000) 
+            updata.pwdErrNum = 0
+            msg += `; 账号锁定 ${parseInt(pwdConfig.authLockDUR)} 秒`
           } else {
-            msg += `, 账号即将被锁定。剩余次数【${parseInt(taConfig.pwdErrMaxNum) - pwdErrNum}】`
+            msg += `, 账号即将被锁定。剩余次数【${parseInt(pwdConfig.pwdErrMaxNum) - pwdErrNum}】`
           }
         }
       }

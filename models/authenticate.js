@@ -7,6 +7,7 @@ const { Account } = require('./account')
  */
 module.exports = async function (ctx) {
   const { username, password } = ctx.request.body
+  let msg = "没有找到匹配的账号"
   if (AccountConfig && AccountConfig.disabled !== true) {
     const { admin, mongodb, accounts } = AccountConfig
     /**指定管理员账号 */
@@ -16,7 +17,6 @@ module.exports = async function (ctx) {
         return [true, tmsClient]
       }
     }
-    let msg = '没有找到匹配的账号'
     if (mongodb && typeof mongodb === 'object' && mongodb.disabled !== true) {
       /**mongodb存储账号 */
       const { name, database, collection } = mongodb
