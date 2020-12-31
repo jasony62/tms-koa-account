@@ -5,7 +5,7 @@ module.exports = {
     name: 'master',
     database: 'tms_account',
     collection: 'account',
-    schema: {},
+    schema: {"nihao":{type: 'string', title: '话单类型'}},
   },
   accounts: [
     {
