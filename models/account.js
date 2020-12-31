@@ -77,18 +77,18 @@ class Account {
       // 记录失败次数
       const pwdErrNum = !oAccount.pwdErrNum ? 1 : oAccount.pwdErrNum * 1 + 1
       let updata = { pwdErrNum }
-      if (AccountConfig.pwdConfig) {
-        const pwdConfig = AccountConfig.pwdConfig
+      if (AccountConfig.authConfig) {
+        const authConfig = AccountConfig.authConfig
         if (
-          new RegExp(/^[1-9]\d*$/).test(pwdConfig.pwdErrMaxNum) && 
-          new RegExp(/^[1-9]\d*$/).test(pwdConfig.authLockDUR)
+          new RegExp(/^[1-9]\d*$/).test(authConfig.pwdErrMaxNum) && 
+          new RegExp(/^[1-9]\d*$/).test(authConfig.authLockDUR)
         ) {
-          if (pwdErrNum >= parseInt(pwdConfig.pwdErrMaxNum)) { // 密码错误次数超限后，账号锁定
-            updata.authLockExp = current + (pwdConfig.authLockDUR * 1000) 
+          if (pwdErrNum >= parseInt(authConfig.pwdErrMaxNum)) { // 密码错误次数超限后，账号锁定
+            updata.authLockExp = current + (authConfig.authLockDUR * 1000) 
             updata.pwdErrNum = 0
-            msg += `; 账号锁定 ${parseInt(pwdConfig.authLockDUR)} 秒`
+            msg += `; 账号锁定 ${parseInt(authConfig.authLockDUR)} 秒`
           } else {
-            msg += `, 账号即将被锁定。剩余次数【${parseInt(pwdConfig.pwdErrMaxNum) - pwdErrNum}】`
+            msg += `, 账号即将被锁定。剩余次数【${parseInt(authConfig.pwdErrMaxNum) - pwdErrNum}】`
           }
         }
       }

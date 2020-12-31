@@ -24,9 +24,12 @@ module.exports = {
     },
   ],
   admin: { username: 'admin', password: 'admin' },
-  pwdConfig: {
+  authConfig: {
     pwdErrMaxNum: 5, // int 密码错误次数限制 0 不限制
     authLockDUR: 20,   // int 登录锁定时长 （秒）
+    authCaptchaCheck: true,   // int 是否启用验证码 
+    captchaCookieKey: "capText", // 验证码加密解密密钥
+    masterCaptcha: "aabb",   // string 万能验证码
     pwdStrengthCheck: {
       min: 8, // 密码最小长度
       max: 20, // 密码最大长度

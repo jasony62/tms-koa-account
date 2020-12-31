@@ -101,7 +101,7 @@ class PasswordProcess {
   }
 
   pwdStrengthCheck() {
-    let { pwdStrengthCheck } = AccountConfig.pwdConfig
+    let { pwdStrengthCheck } = AccountConfig.authConfig
     if (
       Object.prototype.toString.call(pwdStrengthCheck) !== '[object Object]' || 
       Object.keys(pwdStrengthCheck).length === 0

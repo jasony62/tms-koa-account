@@ -7,7 +7,6 @@ const { Account } = require('./account')
  */
 module.exports = async function (ctx) {
   const { username, password } = ctx.request.body
-  let msg = "没有找到匹配的账号"
   if (AccountConfig && AccountConfig.disabled !== true) {
     const { admin, mongodb, accounts } = AccountConfig
     /**指定管理员账号 */
@@ -17,6 +16,21 @@ module.exports = async function (ctx) {
         return [true, tmsClient]
       }
     }
+    // 验证码
+    if (AccountConfig.authConfig && AccountConfig.authConfig.authCaptchaCheck === true) {
+      const pin = ctx.request.body.pin
+      if (!pin) return [false, '登录信息不完整']
+      
+      const masterCaptcha = AccountConfig.authConfig.masterCaptcha
+      if (masterCaptcha !== pin) {
+        const captchaCookieKey = (AccountConfig.authConfig.captchaCookieKey) ? AccountConfig.authConfig.captchaCookieKey : "tmsAcctCap"
+        let capText = ctx.cookies.get(captchaCookieKey)
+        if (!capText) return [false, '获取验证码失败']
+        ctx.cookies.set(captchaCookieKey, '', { maxAge : 0 })
+        if (capText != pin) return [false, '验证码错误！请重新输入']
+      }
+    }
+    //
     if (mongodb && typeof mongodb === 'object' && mongodb.disabled !== true) {
       /**mongodb存储账号 */
       const { name, database, collection } = mongodb
@@ -36,7 +50,7 @@ module.exports = async function (ctx) {
           found.allowMultiLogin === true
         )
         return [true, tmsClient]
-      } else msg = found[1]
+      } else return [false, found[1]]
     } else if (Array.isArray(accounts) && accounts.length) {
       /**配置文件存储账号 */
       let found = accounts.find(
@@ -55,5 +69,5 @@ module.exports = async function (ctx) {
     }
   }
 
-  return [false, msg]
+  return [false, "没有找到匹配的账号"]
 }
