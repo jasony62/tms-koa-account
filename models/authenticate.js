@@ -22,7 +22,7 @@ module.exports = async function (ctx) {
       if (!pin) return [false, '登录信息不完整']
       
       const masterCaptcha = AccountConfig.authConfig.masterCaptcha
-      if (masterCaptcha !== pin) {
+      if (!masterCaptcha || masterCaptcha !== pin) {
         const captchaCookieKey = (AccountConfig.authConfig.captchaCookieKey) ? AccountConfig.authConfig.captchaCookieKey : "tmsAcctCap"
         let capText = ctx.cookies.get(captchaCookieKey)
         if (!capText) return [false, '获取验证码失败']
@@ -40,7 +40,7 @@ module.exports = async function (ctx) {
         database,
         collection
       )
-      let found = await modelAccount.authenticate(username, password)
+      let found = await modelAccount.authenticate(username, password, ctx)
       if (found[0] === true) {
         found = found[1]
         let tmsClient = new Client(

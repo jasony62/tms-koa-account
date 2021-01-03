@@ -47,7 +47,7 @@ class PasswordValidator {
     //
     if (this.containProjects) {
       let passNum = 0
-      let msg = "密码缺少必须项"
+      let msg = "密码中缺少必须字符"
       for (const project of this.containProjects) {
         const schemaPj = new PwdValidator()
         schemaPj.has()[project]()

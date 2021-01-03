@@ -26,6 +26,12 @@ class Account {
     this.cl = mongoClient.db(database).collection(collection)
   }
   create(newAccount) {
+    // 加密密码
+    const salt = ProcessPwd.getSalt() // 加密密钥
+    const pwdProcess = new ProcessPwd(newAccount.password, salt)
+    newAccount.password = pwdProcess.hash
+    newAccount.salt = salt
+
     return this.cl.insertOne(newAccount).then((result) => result.ops[0])
   }
   async list({ filter } = {}, { page, size } = {}) {
@@ -61,7 +67,7 @@ class Account {
   async findOne(where) {
     return this.cl.findOne(where)
   }
-  async authenticate(account, password) {
+  async authenticate(account, password, ctx) {
     const oAccount = await this.findOne({ account })
     if (!oAccount) return [false, "账号或密码错误"]
     if (oAccount.forbidden === true) return [false, "禁止登录"]
@@ -96,7 +102,7 @@ class Account {
       return [false, msg]
     }
     // 密码正确需要重置密码错误次数
-    await this.updateOne({ _id: oAccount._id }, {pwdErrNum: 0, authLockExp: 0, lastLoginTime: current})
+    await this.updateOne({ _id: oAccount._id }, {pwdErrNum: 0, authLockExp: 0, lastLoginTime: current, lastLoginIp: ctx.request.ip})
 
     const {_id, password: pwd, salt, ...newAccount} = oAccount
     return [true, newAccount]

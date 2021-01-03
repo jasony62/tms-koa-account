@@ -149,15 +149,10 @@ class Admin extends Ctrl {
     const pwdProcess = new PasswordProcess(password)
     const checkRst = pwdProcess.pwdStrengthCheck()
     if (checkRst[0] === false) return new ResultFault(checkRst[1])
-    // 加密密码
-    const salt = PasswordProcess.getSalt()
-    pwdProcess.salt = salt
-    const pwdHash = pwdProcess.hash
     // 
     let newAccount = {
       account, 
-      password: pwdHash, 
-      salt,
+      password, 
       nickname, 
       isAdmin: new RegExp(/^true$/).test(isAdmin) ? true : false,
       allowMultiLogin: new RegExp(/^true$/).test(allowMultiLogin) ? true : false,
@@ -165,12 +160,12 @@ class Admin extends Ctrl {
     }
     if (
       AccountConfig.mongodb && 
-      AccountConfig.disabled !== true && 
       Object.prototype.toString.call(AccountConfig.mongodb.schema) === '[object Object]'
     ) {
-      const otherData = Object.keys(other)
-        .filter( key => AccountConfig.mongodb.schema[key] )
-        .reduce( (res, key) => (res[key] = other[key], res), {} )
+      const otherData = 
+        Object.keys(other)
+          .filter( key => AccountConfig.mongodb.schema[key] )
+          .reduce( (res, key) => (res[key] = other[key], res), {} )
       Object.assign(newAccount, otherData) 
     }
     const result = await modelAccountImpl.create(newAccount)
