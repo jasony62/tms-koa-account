@@ -22,7 +22,6 @@ module.exports = {
         id: 'tms-koa-account',
         authentication: 'models/captcha',
       },
-      path: process.env.TMS_APP_AUTH_CAPTCHA_PATH || "./auth/captcha.js"
     },
     client: {
       npm: {

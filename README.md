@@ -22,6 +22,24 @@ module.exports = {
 }
 ```
 
+# tms-koa 验证码方法
+
+`models/captcha`
+
+```javascript
+module.exports = {
+  auth: {
+    captcha: {  // 验证码
+      npm: {
+        disabled: false,
+        id: 'tms-koa-account',
+        authentication: 'models/captcha',
+      },
+    },
+  },
+}
+```
+
 # 账号管理配置文件
 
 ```javascript
