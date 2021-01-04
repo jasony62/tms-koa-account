@@ -1,4 +1,6 @@
 const ObjectId = require('mongodb').ObjectId
+const AccountConfig = require('../config')
+const { PasswordProcess: ProcessPwd } = require('./processPwd')
 
 /**
  * 将指定的page和size参数转换为skip和limit参互
@@ -24,6 +26,12 @@ class Account {
     this.cl = mongoClient.db(database).collection(collection)
   }
   create(newAccount) {
+    // 加密密码
+    const salt = ProcessPwd.getSalt() // 加密密钥
+    const pwdProcess = new ProcessPwd(newAccount.password, salt)
+    newAccount.password = pwdProcess.hash
+    newAccount.salt = salt
+
     return this.cl.insertOne(newAccount).then((result) => result.ops[0])
   }
   async list({ filter } = {}, { page, size } = {}) {
@@ -51,9 +59,56 @@ class Account {
       .updateOne({ _id: ObjectId(id) }, { $set: { forbidden: false } })
       .then(({ modifiedCount }) => modifiedCount === 1)
   }
-  async authenticate(username, password) {
-    const account = await this.cl.findOne({ username, password })
-    return account
+  async updateOne(where, updata) {
+    return this.cl
+      .updateOne(where, { $set: updata })
+      .then(({ modifiedCount }) => modifiedCount === 1)
+  }
+  async findOne(where) {
+    return this.cl.findOne(where)
+  }
+  async authenticate(account, password, ctx) {
+    const oAccount = await this.findOne({ account })
+    if (!oAccount) return [false, "账号或密码错误"]
+    if (oAccount.forbidden === true) return [false, "禁止登录"]
+    //
+    const current = Date.now()
+    if (oAccount.authLockExp && current < oAccount.authLockExp) {
+      return [false, `登录过于频繁，请在${parseInt((oAccount.authLockExp - current) / 1000)}秒后再次尝试`]
+    }
+    //可以登录检查密码
+    const proPwd = new ProcessPwd(password, oAccount.salt)
+    if (proPwd.compare(oAccount.password) === false) {
+      let msg = "账号或密码错误"
+      // 记录失败次数
+      const pwdErrNum = !oAccount.pwdErrNum ? 1 : oAccount.pwdErrNum * 1 + 1
+      let updata = { pwdErrNum }
+      if (AccountConfig.authConfig) {
+        const authConfig = AccountConfig.authConfig
+        if (
+          new RegExp(/^[1-9]\d*$/).test(authConfig.pwdErrMaxNum) && 
+          new RegExp(/^[1-9]\d*$/).test(authConfig.authLockDUR)
+        ) {
+          if (pwdErrNum >= parseInt(authConfig.pwdErrMaxNum)) { // 密码错误次数超限后，账号锁定
+            updata.authLockExp = current + (authConfig.authLockDUR * 1000) 
+            updata.pwdErrNum = 0
+            msg += `; 账号锁定 ${parseInt(authConfig.authLockDUR)} 秒`
+          } else {
+            msg += `, 账号即将被锁定。剩余次数【${parseInt(authConfig.pwdErrMaxNum) - pwdErrNum}】`
+          }
+        }
+      }
+      await this.updateOne({ _id: oAccount._id }, updata)
+      return [false, msg]
+    }
+    // 密码正确需要重置密码错误次数
+    await this.updateOne({ _id: oAccount._id }, {pwdErrNum: 0, authLockExp: 0, lastLoginTime: current, lastLoginIp: ctx.request.ip})
+
+    const {_id, password: pwd, salt, ...newAccount} = oAccount
+    return [true, newAccount]
+  }
+  async getAccount(account) {
+    return this.findOne({account})
   }
 }
 

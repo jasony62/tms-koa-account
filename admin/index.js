@@ -5,6 +5,7 @@ const { Ctrl, ResultData, ResultFault, loadConfig } = require('tms-koa')
 const { MongoContext } = require('tms-koa').Context
 
 const { Account } = require('../models/account')
+const { PasswordProcess } = require('../models/processPwd')
 
 const AccountConfig = loadConfig('account')
 /**
@@ -75,6 +76,15 @@ class MongodbModel {
   async unforbid(id) {
     return await this.mongodbAccount.unforbid(id)
   }
+  async getAccount(account) {
+    return await this.mongodbAccount.getAccount(account)
+  }
+  async updateOne(where, updata) {
+    return await this.mongodbAccount.updateOne(where, updata)
+  }
+  async findOne(where) {
+    return await this.mongodbAccount.findOne(where)
+  }
 }
 
 let modelAccountImpl // 账号处理
@@ -128,7 +138,36 @@ class Admin extends Ctrl {
   }
   /**创建新账号 */
   async create() {
-    let newAccount = this.request.body
+    let userInfo = this.request.body
+    if (["password", "username", "nickname"].every(v => userInfo[v]) === false) return new ResultFault("用户信息不完整")
+    
+    let {username: account, password, nickname, isAdmin, allowMultiLogin, ...other} = userInfo
+    // 检查账号是否已存在
+    const rst = await modelAccountImpl.getAccount(account)
+    if (rst) return new ResultFault("账号已存在")
+    // 检查密码格式
+    const pwdProcess = new PasswordProcess(password)
+    const checkRst = pwdProcess.pwdStrengthCheck()
+    if (checkRst[0] === false) return new ResultFault(checkRst[1])
+    // 
+    let newAccount = {
+      account, 
+      password, 
+      nickname, 
+      isAdmin: new RegExp(/^true$/).test(isAdmin) ? true : false,
+      allowMultiLogin: new RegExp(/^true$/).test(allowMultiLogin) ? true : false,
+      create_at: Date.now()
+    }
+    if (
+      AccountConfig.mongodb && 
+      Object.prototype.toString.call(AccountConfig.mongodb.schema) === '[object Object]'
+    ) {
+      const otherData = 
+        Object.keys(other)
+          .filter( key => AccountConfig.mongodb.schema[key] )
+          .reduce( (res, key) => (res[key] = other[key], res), {} )
+      Object.assign(newAccount, otherData) 
+    }
     const result = await modelAccountImpl.create(newAccount)
     return new ResultData(result)
   }
