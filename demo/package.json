@@ -12,7 +12,7 @@
   "dependencies": {
     "log4js": "^6.3.0",
     "mongodb": "^3.6.3",
-    "tms-koa": "^0.0.62",
+    "tms-koa": "^0.0.64",
     "tms-koa-account": "github:jasony62/tms-koa-account"
   }
 }

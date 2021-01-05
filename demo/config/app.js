@@ -16,6 +16,13 @@ module.exports = {
       privateKey: 'tms-koa-account',
       expiresIn: 3600,
     },
+    captcha: {  // 验证码
+      npm: {
+        disabled: false,
+        id: 'tms-koa-account',
+        authentication: 'models/captcha',
+      },
+    },
     client: {
       npm: {
         disabled: false,
