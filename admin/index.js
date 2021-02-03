@@ -1,9 +1,5 @@
-
-
 const { Ctrl, ResultData, ResultFault } = require('tms-koa')
-
-const { modelAccountImpl } = require('../models/accountModel')
-
+const { Account } = require('../models/account')
 
 /**
  * 管理系统账号
@@ -18,7 +14,7 @@ class Admin extends Ctrl {
     let { page, size } = this.request.query
     const { filter } = this.request.body
 
-    const result = await modelAccountImpl.list({ filter }, { page, size })
+    const result = await Account.list({ filter }, { page, size })
 
     return new ResultData(result)
   }
@@ -26,10 +22,10 @@ class Admin extends Ctrl {
   async create() {
     let userInfo = this.request.body
     
-    return modelAccountImpl
-      .createModel(userInfo)
-      .then(rst => {
-        return new ResultData(rst)
+    return Account
+      .processAndCreate(userInfo)
+      .then(account => {
+        return new ResultData(account)
       })
       .catch(errMsg => {
         return new ResultFault(errMsg)
@@ -38,13 +34,13 @@ class Admin extends Ctrl {
   /**禁用账号 */
   async forbid() {
     const { id } = this.request.query
-    const result = await modelAccountImpl.forbid(id)
+    const result = await Account.forbid(id)
     return new ResultData(result)
   }
   /**解禁账号 */
   async unforbid() {
     const { id } = this.request.query
-    const result = await modelAccountImpl.unforbid(id)
+    const result = await Account.unforbid(id)
     return new ResultData(result)
   }
 }
