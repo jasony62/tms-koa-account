@@ -12,16 +12,9 @@ module.exports = {
   },
   auth: {
     disabled: false,
-    // jwt: {
-    //   privateKey: 'tms-koa-account',
-    //   expiresIn: 3600,
-    // },
-    
-    redis: {
-      prefix: 'dev-op',
-      host: 'localhost',
-      port: 6378,
-      expiresIn: 600
+    jwt: {
+      privateKey: 'tms-koa-account',
+      expiresIn: 3600,
     },
     captcha: {  // 验证码
       npm: {
