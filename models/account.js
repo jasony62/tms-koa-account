@@ -49,6 +49,7 @@ class MongodbModel {
       if (rst) return reject("账号已存在")
       // 检查密码格式
       const pwdProcess = new ProcessPwd(password)
+      pwdProcess.options = { account }
       const checkRst = pwdProcess.pwdStrengthCheck()
       if (checkRst[0] === false) return reject(checkRst[1])
       // 
