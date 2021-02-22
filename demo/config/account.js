@@ -36,6 +36,7 @@ module.exports = {
       pwdBlack: ["P@ssw0rd"], // 密码黑名单
       containProjects: {mustCheckNum: 3, contains: ["digits", "uppercase", "lowercase", "symbols"]}, // 是否包含数字、大写字母、小写字母、特殊字符, 至少满足其中length项
       hasSpaces: false, // 是否包含空格
+      hasAccount: false,
     }
   }
 }
