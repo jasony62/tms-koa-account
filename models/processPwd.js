@@ -4,14 +4,16 @@ const { customAlphabet } = require('nanoid')
 const AccountConfig = require('../config')
 
 class PasswordValidator {
-  constructor(pwd, config) {
+  constructor(pwd, config, options = {}) {
     this.pwd = pwd
+    this.options = options
     if (Object.prototype.toString.call(config) !== '[object Object]') config = {}
     this.config = {
       min: config.min ? config.min : 0, // 密码最小长度
       max: config.max ? config.max : 100, // 密码最大长度
       pwdBlack: Array.isArray(config.pwdBlack) ? config.pwdBlack : [], // 密码黑名单
       hasSpaces: config.hasSpaces ? true : false, // 是否包含空格
+      hasAccount: config.hasAccount ? true : false, // 是否包含空格
     }
     
     this.containProjects = []
@@ -34,7 +36,7 @@ class PasswordValidator {
   validate() {
     const PwdValidator = require('password-validator')
 
-    const { min, max, pwdBlack, hasSpaces } = this.config
+    const { min, max, pwdBlack, hasSpaces, hasAccount } = this.config
     
     const schema = new PwdValidator()
     schema
@@ -44,6 +46,12 @@ class PasswordValidator {
     if (pwdBlack.length > 0) schema.is().not().oneOf(pwdBlack)
     if (schema.validate(this.pwd) === false) return [false, "密码格式错误或为风险密码"]
 
+    // 密码中不能包含账号
+    if (hasAccount === false && this.options.account) {
+      let account = this.options.account
+      let reverseAccount = account.split('').reverse().join('')
+      if (this.pwd.includes(account) || this.pwd.includes(reverseAccount)) return [false, "密码中不能包含账号"]
+    }
     //
     if (this.containProjects) {
       let passNum = 0
@@ -53,10 +61,30 @@ class PasswordValidator {
         schemaPj.has()[project]()
         if (schemaPj.validate(this.pwd) !== false) 
           passNum++
-        else
-          msg += `【${project}】`
+        else {
+          switch (project) {
+            case "digits":
+              msg += '【数字】'
+              break;
+            case "uppercase":
+              msg += '【大写字母】'
+              break;
+            case "lowercase":
+              msg += '【小写字母】'
+              break;
+            case "symbols":
+              msg += '【特殊字符】'
+              break;  
+            default:
+              msg += `【${project}】`
+              break;
+          }
+        }
       }
-      if (passNum < this.checkProjectsLength) return [false, msg]
+      if (passNum < this.checkProjectsLength) {
+        msg += ` 至少【${this.checkProjectsLength - passNum}】项`
+        return [false, msg]
+      }
     }
 
     return [true]
@@ -65,10 +93,12 @@ class PasswordValidator {
 
 const SALT = Symbol('salt')
 const HASH = Symbol('hash')
+const OPTIONS = Symbol('options')
 class PasswordProcess {
-  constructor(myPlaintextPassword, salt) {
+  constructor(myPlaintextPassword, salt = "", options = {}) {
     this.myPlaintextPassword = myPlaintextPassword
     this.salt = salt
+    this.options = options
   }
 
   get hash() {
@@ -84,6 +114,14 @@ class PasswordProcess {
 
   set salt(value) {
     this[SALT] = value
+  }
+
+  get options() {
+    return this[OPTIONS]
+  }
+
+  set options(value) {
+    this[OPTIONS] = value
   }
 
   getPwdHash(pwd) {
@@ -108,7 +146,7 @@ class PasswordProcess {
     ) return [ true ]
 
     //
-    const modelValidator = new PasswordValidator(this.myPlaintextPassword, pwdStrengthCheck)
+    const modelValidator = new PasswordValidator(this.myPlaintextPassword, pwdStrengthCheck, this.options)
     const rst = modelValidator.validate()
     
     return rst

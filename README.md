@@ -77,6 +77,7 @@ module.exports = {
       pwdBlack: [],
       containProjects: {mustCheckNum: 4, contains: ["digits", "uppercase", "lowercase", "symbols"]},
       hasSpaces: false,
+      hasAccount: false,
     }
   }
 }
@@ -109,6 +110,7 @@ module.exports = {
 | pwdBlack       | 密码黑名单                       | object[] | 否   |
 | containProjects| 密码中需要包含的字符类型          | object   | 否   |
 | hasSpaces      | 密码中是否可以包含空格            | boolean  | 否   |
+| hasAccount      | 密码中是否可以包含账号           | boolean  | 否   |
 
 `mongodb`优先于`accounts`设置。
 
@@ -117,6 +119,7 @@ module.exports = {
 ```javascript
 const { PasswordProcess } = require('../models/processPwd')
 const pwdProcess = new PasswordProcess(password)
+pwdProcess.options = { account }
 const checkRst = pwdProcess.pwdStrengthCheck()
 ```
 
@@ -133,8 +136,6 @@ const checkRst = pwdProcess.pwdStrengthCheck()
 | authLockExp       |  授权锁截止时间       | string   | 否   |
 | isAdmin           | 是否为管理员          | boolean  | 否   |
 | allowMultiLogin   | 是否允许多点登录      | boolean  | 否   |
-
-密码应该不用明文存储。
 
 # 演示
 
