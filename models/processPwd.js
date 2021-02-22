@@ -50,7 +50,7 @@ class PasswordValidator {
     if (hasAccount === false && this.options.account) {
       let account = this.options.account
       let reverseAccount = account.split('').reverse().join('')
-      if (this.pwd === account || this.pwd === reverseAccount) return [false, "密码中不能包含账号"]
+      if (this.pwd.includes(account) || this.pwd.includes(reverseAccount)) return [false, "密码中不能包含账号"]
     }
     //
     if (this.containProjects) {
