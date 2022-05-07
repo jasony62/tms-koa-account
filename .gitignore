@@ -105,3 +105,6 @@ dist
 
 # 项目
 *.local.js
+
+# 数据文件
+_lowdb.json

@@ -11,9 +11,8 @@
   "license": "MIT",
   "dependencies": {
     "log4js": "^6.3.0",
+    "lowdb": "^1.0.0",
     "mongodb": "^3.6.3",
-    "redis": "^4.1.0",
-    "tms-koa": "^0.0.75",
     "tms-koa-account": "github:jasony62/tms-koa-account"
   }
 }

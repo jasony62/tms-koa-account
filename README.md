@@ -117,7 +117,7 @@ module.exports = {
 # 密码强度校验类
 
 ```javascript
-const { PasswordProcess } = require('../models/processPwd')
+const { PasswordProcess } = require('../models/processpwd')
 const pwdProcess = new PasswordProcess(password)
 pwdProcess.options = { account }
 const checkRst = pwdProcess.pwdStrengthCheck()

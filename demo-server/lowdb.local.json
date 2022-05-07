@@ -1,0 +1,18 @@
+{
+  "captchas": [
+    {
+      "appid": "order",
+      "userid": "aly22",
+      "code": "223u",
+      "expire_at": 1651893240581,
+      "limit": 3
+    },
+    {
+      "appid": "oauth",
+      "userid": "aly23",
+      "code": "zqil",
+      "expire_at": 1651910504853,
+      "limit": 3
+    }
+  ]
+}
