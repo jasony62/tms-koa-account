@@ -15,7 +15,7 @@ class Captcha {
 
     this.storageType = config.storageType || "lowdb"
     this.masterCaptcha = config.masterCaptcha || null
-    this.codeType = config.codeType || "number,upperCase,lowerCase"
+    this.alphabetType = config.alphabetType || "number,upperCase,lowerCase"
     this.codeSize = parseInt(config.codeSize) || 4
     let expire = parseInt(config.expire) || 300
     this.expire = expire * 1000
@@ -25,7 +25,7 @@ class Captcha {
       this.alphabet = config.alphabet
     } else {
       let codeAlphabet = ""
-      this.codeType.split(",").forEach( v => {
+      this.alphabetType.split(",").forEach( v => {
         switch (v) {
           case "number":
             codeAlphabet += this.numberAlphabet
@@ -38,6 +38,7 @@ class Captcha {
             break
         }
       })
+      if (codeAlphabet.length === 0) throw new Error("验证码字母表为空")
       this.alphabet = codeAlphabet
     }
   }
@@ -84,9 +85,13 @@ class Captcha {
   }
   /**
    * 
+   * @param {*} appid 
+   * @param {*} userid 
+   * @param {*} code 
+   * @param {*} strictMode Y | N 检验大小写
    * @returns 
    */
-  authCode(appid, userid, code) {
+  authCode(appid, userid, code, strictMode = "N") {
     if (!userid || !appid || !code) {
       return [false, "参数缺失"]
     }
@@ -101,7 +106,14 @@ class Captcha {
       const lowClient = this.getLowDb()
       let captchaCodes = lowClient
         .get('captchas')
-        .filter( v => v.appid === appid && v.userid === userid && v.code.toLowerCase() === code.toLowerCase() )
+        .filter( v => {
+          let pass = v.appid === appid && v.userid === userid
+          if (pass) {
+            if (strictMode === "Y") pass = v.code === code
+            else pass = v.code.toLowerCase() === code.toLowerCase()
+          }
+          return pass
+        } )
         .value()
 
       if (captchaCodes.length === 0)
@@ -172,11 +184,11 @@ Captcha.ins = (config = {}) => {
  * @returns 
  */
 async function createCaptchaCode(ctx) {
-  let storageType, codeType, alphabet, codeSize, expire, limit, userid, appid
+  let storageType, alphabetType, alphabet, codeSize, expire, limit, userid, appid
 
   if (ctx.request.method === "GET") {
     storageType = ctx.request.query.storageType
-    codeType = ctx.request.query.codeType
+    alphabetType = ctx.request.query.alphabetType
     alphabet = ctx.request.query.alphabet
     codeSize = ctx.request.query.codeSize
     expire = ctx.request.query.expire
@@ -185,7 +197,7 @@ async function createCaptchaCode(ctx) {
     userid = ctx.request.query.userid
   } else if (ctx.request.method === "POST") {
     storageType = ctx.request.body.storageType
-    codeType = ctx.request.body.codeType
+    alphabetType = ctx.request.body.alphabetType
     alphabet = ctx.request.body.alphabet
     codeSize = ctx.request.body.codeSize
     expire = ctx.request.body.expire
@@ -200,7 +212,7 @@ async function createCaptchaCode(ctx) {
 
   let config = { 
     storageType, 
-    codeType, 
+    alphabetType, 
     alphabet,
     codeSize, 
     expire,
@@ -220,18 +232,20 @@ async function createCaptchaCode(ctx) {
  * @returns 
  */
 async function authCaptchaCode(ctx) {
-  let storageType, userid, appid, code
+  let storageType, userid, appid, code, strictMode
   
   if (ctx.request.method === "GET") {
     storageType = ctx.request.query.storageType
     appid = ctx.request.query.appid
     userid = ctx.request.query.userid
     code = ctx.request.query.code
+    strictMode = ctx.request.query.strictMode
   } else if (ctx.request.method === "POST") {
     storageType = ctx.request.body.storageType
     appid = ctx.request.body.appid
     userid = ctx.request.body.userid
     code = ctx.request.body.code
+    strictMode = ctx.request.body.strictMode
   }
 
   if (!userid || !appid || !code) {
@@ -239,7 +253,7 @@ async function authCaptchaCode(ctx) {
   }
 
   const instance = Captcha.ins({ storageType })
-  return instance.authCode(appid, userid, code)
+  return instance.authCode(appid, userid, code, strictMode)
 }
 /**
  * 生成图形验证码

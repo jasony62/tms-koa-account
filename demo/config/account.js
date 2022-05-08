@@ -41,8 +41,8 @@ module.exports = {
   //   storageType: "lowdb", // 验证码存储方式 仅支持 lowdb
     masterCaptcha: "aabb",   // string 万能验证码
   //   codeSize: 4,
-  //   codeType: "number,upperCase,lowerCase",
+  //   alphabet: "1234567890"
+  //   alphabetType: "number,upperCase,lowerCase",
   //   expire: 300, // 过期时间 s
-  //   limit: 3, // 默认使用次数
   }
 }

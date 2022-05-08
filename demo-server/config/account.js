@@ -36,13 +36,13 @@ module.exports = {
       hasAccount: false,
     }
   },
-  // captchaConfig: {
+  captchaConfig: {
   //   disabled: false,   // boolean 是否启用验证码
   //   storageType: "lowdb", // 验证码存储方式 仅支持 lowdb
-  //   masterCaptcha: "aabb",   // string 万能验证码
+    masterCaptcha: "aabb",   // string 万能验证码
   //   codeSize: 4,
-  //   codeType: "number,upperCase,lowerCase",
+  //   alphabetType: "number,upperCase,lowerCase",
+  //   alphabet: "1234567890"
   //   expire: 300, // 过期时间 s
-  //   limit: 3, // 默认使用次数
-  // }
+  }
 }
