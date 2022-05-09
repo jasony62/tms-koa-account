@@ -1,13 +1,19 @@
 {
   "name": "tms-koa-account",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "tms-koa控制器插件，账号管理。",
   "main": "index.js",
   "files": [
-    "index.js"
+    "app.js",
+    "router.js",
+    "index.js",
+    "config.js",
+    "context",
+    "admin",
+    "models"
   ],
   "peerDependencies": {
-    "tms-koa": "^0.0.61"
+    "tms-koa": "^0.0.64"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -24,6 +30,15 @@
   },
   "homepage": "https://github.com/jasony62/tms-koa-account#readme",
   "dependencies": {
-    "@log4js-node/log4js-api": "^1.0.2"
+    "@koa/cors": "^3.3.0",
+    "@koa/router": "^10.1.1",
+    "@log4js-node/log4js-api": "^1.0.2",
+    "dotenv-flow": "^3.1.0",
+    "koa": "^2.8.1",
+    "koa-body": "^4.1.1",
+    "lowdb": "1.0.0",
+    "nanoid": "^3.1.20",
+    "password-validator": "^5.1.1",
+    "svg-captcha": "^1.4.0"
   }
 }

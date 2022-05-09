@@ -104,4 +104,7 @@ dist
 .tern-port
 
 # 项目
-/demo
+*.local.js
+
+# 数据文件
+_lowdb.json

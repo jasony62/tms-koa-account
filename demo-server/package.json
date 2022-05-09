@@ -1,0 +1,18 @@
+{
+  "name": "demo",
+  "version": "0.0.1",
+  "description": "演示tms-koa-account插件的使用",
+  "main": "index.js",
+  "scripts": {
+    "pm2": "pm2 start ecosystem.config.js"
+  },
+  "keywords": [],
+  "author": "jasony62",
+  "license": "MIT",
+  "dependencies": {
+    "log4js": "^6.3.0",
+    "lowdb": "^1.0.0",
+    "mongodb": "^3.6.3",
+    "tms-koa-account": "github:jasony62/tms-koa-account"
+  }
+}
