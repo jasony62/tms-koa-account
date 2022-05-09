@@ -1,7 +1,7 @@
 const Crypto = require('crypto')
 const { customAlphabet } = require('nanoid')
 
-const AccountConfig = require('../config')
+const AccountConfig = require('../config').AccountConfig
 
 class PasswordValidator {
   constructor(pwd, config, options = {}) {

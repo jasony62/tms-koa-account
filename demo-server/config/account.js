@@ -1,7 +1,7 @@
 module.exports = {
   disabled: false,
   mongodb: {
-    disabled: true,
+    disabled: false,
     name: 'master',
     database: 'tms_account',
     collection: 'account',
@@ -41,8 +41,8 @@ module.exports = {
   //   storageType: "lowdb", // 验证码存储方式 仅支持 lowdb
     masterCaptcha: "aabb",   // string 万能验证码
   //   codeSize: 4,
-  //   alphabet: "1234567890"
   //   alphabetType: "number,upperCase,lowerCase",
+  //   alphabet: "1234567890"
   //   expire: 300, // 过期时间 s
   }
 }

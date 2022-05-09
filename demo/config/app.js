@@ -1,5 +1,5 @@
 module.exports = {
-  port: 4000,
+  port: process.env.APP_PORT || 3001,
   name: 'tms-koa-account-demo',
   router: {
     auth: {

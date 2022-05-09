@@ -4,8 +4,11 @@
   "description": "tms-koa控制器插件，账号管理。",
   "main": "index.js",
   "files": [
+    "app.js",
+    "router.js",
     "index.js",
     "config.js",
+    "context",
     "admin",
     "models"
   ],
@@ -27,7 +30,13 @@
   },
   "homepage": "https://github.com/jasony62/tms-koa-account#readme",
   "dependencies": {
+    "@koa/cors": "^3.3.0",
+    "@koa/router": "^10.1.1",
     "@log4js-node/log4js-api": "^1.0.2",
+    "dotenv-flow": "^3.1.0",
+    "koa": "^2.8.1",
+    "koa-body": "^4.1.1",
+    "lowdb": "1.0.0",
     "nanoid": "^3.1.20",
     "password-validator": "^5.1.1",
     "svg-captcha": "^1.4.0"

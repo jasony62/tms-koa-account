@@ -1,8 +1,8 @@
 const { MongoContext } = require('tms-koa').Context
 const ObjectId = require('mongodb').ObjectId
 
-const AccountConfig = require('../config')
-const { PasswordProcess: ProcessPwd } = require('./processPwd')
+const AccountConfig = require('../config').AccountConfig
+const { PasswordProcess: ProcessPwd } = require('./processpwd')
 
 const log4js = require('@log4js-node/log4js-api')
 const logger = log4js.getLogger('tms-koa-account-account')
@@ -116,7 +116,7 @@ class MongodbModel {
     //
     const current = Date.now()
     if (oAccount.authLockExp && current < oAccount.authLockExp) {
-      return [false, `登录过于频繁，请在${parseInt((oAccount.authLockExp - current) / 1000)}秒后再次尝试`]
+      return [false, `登录频繁，请在${parseInt((oAccount.authLockExp - current) / 1000)}秒后再次尝试`]
     }
     //可以登录检查密码
     const proPwd = new ProcessPwd(password, oAccount.salt)

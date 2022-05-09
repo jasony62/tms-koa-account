@@ -1,4 +1,5 @@
-const { ResultData } = require('tms-koa/lib/response')
+const { ResultData } = require('./models/response')
+const { TmsKoaAccount, Context } = require('./app')
 
 class Main {
   /**
@@ -10,4 +11,4 @@ class Main {
   }
 }
 
-module.exports = Main
+module.exports = { Main, TmsKoaAccount, Context }

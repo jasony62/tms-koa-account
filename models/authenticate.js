@@ -1,5 +1,7 @@
 const { Client } = require('tms-koa')
-const AccountConfig = require('../config')
+const AccountConfig = require('../config').AccountConfig
+const { authCaptchaCode } = require("../models/captcha")
+const CaptchaConfig = AccountConfig.captchaConfig
 
 /**
  * 根据http请求中包含的信息获得用户数据，支持异步调用
@@ -17,18 +19,13 @@ module.exports = async function (ctx) {
       }
     }
     // 验证码
-    if (AccountConfig.authConfig && AccountConfig.authConfig.authCaptchaCheck === true) {
-      const pin = ctx.request.body.pin
-      if (!pin) return [false, '登录信息不完整']
-      
-      const masterCaptcha = AccountConfig.authConfig.masterCaptcha
-      if (!masterCaptcha || masterCaptcha !== pin) {
-        const captchaCookieKey = (AccountConfig.authConfig.captchaCookieKey) ? AccountConfig.authConfig.captchaCookieKey : "tmsAcctCap"
-        let capText = ctx.cookies.get(captchaCookieKey)
-        if (!capText) return [false, '获取验证码失败']
-        ctx.cookies.set(captchaCookieKey, '', { maxAge : 0 })
-        if (capText != pin) return [false, '验证码错误！请重新输入']
-      }
+    if (!CaptchaConfig || CaptchaConfig.disabled !== true) {
+      const code = ctx.request.body.code
+      if (!code) return [false, '登录信息不完整']
+
+      const rst = await authCaptchaCode(ctx)
+      if (rst[0] === false)
+        return rst
     }
     /**mongodb存储账号 */
     let found = await Account.authenticate(username, password, ctx)
