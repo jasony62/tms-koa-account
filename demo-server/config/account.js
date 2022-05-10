@@ -7,6 +7,9 @@ module.exports = {
     collection: 'account',
     schema: {"test": {type: 'string', title: '测试'}},
   },
+  // redis: {
+  //   name: 'master'
+  // },
   accounts: [
     {
       id: 1,
@@ -38,7 +41,7 @@ module.exports = {
   },
   captchaConfig: {
   //   disabled: false,   // boolean 是否启用验证码
-  //   storageType: "lowdb", // 验证码存储方式 仅支持 lowdb
+    storageType: "lowdb", // 验证码存储方式 lowdb | redis
     masterCaptcha: "aabb",   // string 万能验证码
   //   codeSize: 4,
   //   alphabetType: "number,upperCase,lowerCase",
