@@ -56,6 +56,9 @@ module.exports = {
     collection: 'account',
     schema: {"test": {type: 'string', title: '测试'}},
   },
+  // redis: {
+  //   name: master
+  // }
   accounts: [
     {
       id: 1,
@@ -87,7 +90,7 @@ module.exports = {
   },
   // captchaConfig: {
   //   disabled: false,   // boolean 是否启用验证码
-  //   storageType: "lowdb", // 验证码存储方式 仅支持 lowdb
+  //   storageType: "lowdb", // 验证码存储方式  lowdb | redis
   //   masterCaptcha: "aabb",   // string 万能验证码
   //   codeSize: 4, //验证码长度  默认4
   //   alphabetType: "number,upperCase,lowerCase", // 字母表生产类型 默认 数字+大写字母+小写字母
@@ -108,7 +111,7 @@ module.exports = {
 
 # authConfig 字段说明
 
-| 字段                    | 说明                               | 类型     | 必填 |
+| 字段                     | 说明                               | 类型     | 必填 |
 | ----------------------- | ---------------------------------- | -------- | ---- |
 | pwdErrMaxNum            | 密码错误次数限制 0 不限制           | int   | 否   |
 | authLockDUR             | 密码错误次数超限后登录锁定时长（秒） | int   | 否   |
@@ -121,9 +124,9 @@ module.exports = {
 | min            | 密码最小长度                     | int      | 否   |
 | max            | 密码最大长度                     | int      | 否   |
 | pwdBlack       | 密码黑名单                       | object[] | 否   |
-| containProjects| 密码中需要包含的字符类型          | object   | 否   |
-| hasSpaces      | 密码中是否可以包含空格            | boolean  | 否   |
-| hasAccount      | 密码中是否可以包含账号           | boolean  | 否   |
+| containProjects| 密码中需要包含的字符类型           | object   | 否   |
+| hasSpaces      | 密码中是否可以包含空格             | boolean  | 否   |
+| hasAccount      | 密码中是否可以包含账号            | boolean  | 否   |
 
 `mongodb`优先于`accounts`设置。
 
@@ -131,12 +134,12 @@ module.exports = {
 
 | 字段          | 说明                                                         | 类型    | 默认                       | 必填 |
 | ------------- | ------------------------------------------------------------ | ------- | -------------------------- | ---- |
-| disabled      | 是否启用验证码                                               | boolean | false                      | 否   |
-| storageType   | 验证码存储方式                                               | string  | lowdb                      | 否   |
+| disabled      | 是否启用验证码                                                | boolean | false                     | 否   |
+| storageType   | 验证码存储方式  支持 redis、lowdb                              | string  | lowdb                     | 否   |
 | masterCaptcha | 万能验证码                                                   | string  |                            | 否   |
 | codeSize      | 验证码长度                                                   | int     | 4                          | 否   |
-| alphabetType  | 验证码字母表类型 与alphabetType不可公用，优先级大于alphabetType | string  | number,upperCase,lowerCase | 否   |
-| expire        | 验证码有效期（s）                                            | int     | 300                        | 否   |
+| alphabetType  | 验证码字母表类型 与alphabetType不可公用，优先级大于alphabetType   | string  | number,upperCase,lowerCase | 否   |
+| expire        | 验证码有效期（s）                                             | int     | 300                        | 否   |
 
 
 

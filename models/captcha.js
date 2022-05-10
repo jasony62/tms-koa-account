@@ -24,9 +24,6 @@ class InRedis {
   }
   // 连接redis
   static create() {
-    if (!AccountConfig.redis) throw new Error("未找到redis配置")
-
-    
     let redisContext = require('../app').Context.RedisContext
     if (!redisContext) {
       redisContext = require('tms-koa').Context.RedisContext
@@ -35,9 +32,12 @@ class InRedis {
 
     let redisConfig = loadConfig("redis")
     if (!redisConfig.host || !redisConfig.port) {
-      redisConfig = redisConfig[AccountConfig.redis.name]
+      let redisName = AccountConfig.redis && AccountConfig.redis.name ? AccountConfig.redis.name : "master"
+      redisConfig = redisConfig[redisName]
+      if (!redisConfig) {
+        return Promise.reject("未找到指定的redis配置信息")
+      }
     }
-
     return redisContext.ins(redisConfig).then(
       (context) => new InRedis(context.redisClient)
     )

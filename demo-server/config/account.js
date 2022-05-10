@@ -7,10 +7,9 @@ module.exports = {
     collection: 'account',
     schema: {"test": {type: 'string', title: '测试'}},
   },
-  redis: {
-    disabled: false,
-    name: 'master'
-  },
+  // redis: {
+  //   name: 'master'
+  // },
   accounts: [
     {
       id: 1,
