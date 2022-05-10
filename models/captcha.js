@@ -1,7 +1,136 @@
 const _ = require('lodash')
 const { customAlphabet } = require('nanoid')
 const { Context: lowdbContext } = require("../context/lowdb")
-const { captchaConfig: CaptchaConfig = {} } = require('../config').AccountConfig
+const { AccountConfig, loadConfig } = require('../config')
+const CaptchaConfig = AccountConfig.captchaConfig || {}
+const log4js = require('@log4js-node/log4js-api')
+const logger = log4js.getLogger('tms-koa-account-captcha')
+
+
+/**
+ * 在redis中保存客户端的验证码
+ */
+class InRedis {
+  /**
+   *
+   * @param {*} redisClient
+   */
+  constructor(redisClient) {
+    this.redisClient = redisClient
+  }
+  //
+  key (appid, userid) {
+    return `${AccountConfig.prefix || 'tms-koa-account'}:captcha:${appid}:${userid}`
+  }
+  // 连接redis
+  static create() {
+    if (!AccountConfig.redis) throw new Error("未找到redis配置")
+
+    
+    let redisContext = require('../app').Context.RedisContext
+    if (!redisContext) {
+      redisContext = require('tms-koa').Context.RedisContext
+    }
+    if (!redisContext) throw new Error("未找到redis连接")
+
+    let redisConfig = loadConfig("redis")
+    if (!redisConfig.host || !redisConfig.port) {
+      redisConfig = redisConfig[AccountConfig.redis.name]
+    }
+
+    return redisContext.ins(redisConfig).then(
+      (context) => new InRedis(context.redisClient)
+    )
+  }
+  quit() {
+    //this.redisClient.quit()
+  }
+  /**
+   * 保存创建的token
+   *
+   * @param {String} token
+   * @param {String} clientId
+   * @param {Object} data
+   */
+  store(appid, userid, data, expire_in) {
+    let key = this.key(appid, userid)
+    return new Promise((resolve) => {
+      this.redisClient.set(
+        key,
+        JSON.stringify(data),
+        () => {
+          this.expire(appid, userid, expire_in).then(() => resolve(expire_in))
+        }
+      )
+    })
+  }
+  /**
+   * 设置过期时间
+   * @param {String} token
+   * @param {String} clientId
+   */
+  expire(appid, userid, expire_in) {
+    let key = this.key(appid, userid)
+    return new Promise((resolve) => {
+      this.redisClient.expire(key, expire_in, () => {
+        resolve(expire_in)
+      })
+    })
+  }
+  /**
+   * 检查是否已经分配过token
+   *
+   * @param {*} clientId
+   */
+  scan(appid, userid, cursor = '0', keys = []) {
+    return new Promise((resolve, reject) => {
+      this.redisClient.scan(
+        cursor,
+        'MATCH',
+        this.key(appid, userid),
+        'COUNT',
+        '500',
+        (err, res) => {
+          if (err) return reject(err)
+          else {
+            if (res[1].length) keys.push(...res[1])
+            if (res[0] !== '0') {
+              return this.scan(appid, userid, res[0], keys)
+                .then((r) => resolve(r))
+                .catch((e) => reject(e))
+            } else {
+              return resolve(keys)
+            }
+          }
+        }
+      )
+    })
+  }
+  /**
+   * 获得对应的数据
+   *
+   * @param {string} 
+   */
+  get(appid, userid, ) {
+    let key = this.key(appid, userid)
+    return new Promise((resolve, reject) => {
+      this.redisClient.get(key, (e, r) => {
+        if (e) {
+          logger.error(e)
+          return reject('access token error:redis error')
+        } else return resolve(JSON.parse(r))
+      })
+    })
+  }
+  /**
+   *
+   * @param {array} keys
+   */
+  del(appid, userid) {
+    let key = this.key(appid, userid)
+    return this.redisClient.del(key)
+  }
+}
 
 
 /**
@@ -17,8 +146,7 @@ class Captcha {
     this.masterCaptcha = config.masterCaptcha || null
     this.alphabetType = config.alphabetType || "number,upperCase,lowerCase"
     this.codeSize = parseInt(config.codeSize) || 4
-    let expire = parseInt(config.expire) || 300
-    this.expire = expire * 1000
+    this.expire = parseInt(config.expire) || 300
     this.limit = parseInt(config.limit) || 3
 
     if (config.alphabet) {
@@ -69,14 +197,17 @@ class Captcha {
       appid,
       userid,
       code,
-      expire_at: Date.now() + this.expire,
+      expire_at: Date.now() + (this.expire * 1000),
       limit: this.limit
     }
 
+    await this.removeCodeByUser(appid, userid) // 清空此用户的验证码
     if (this.storageType === "lowdb") {
-      const lowClient = this.getLowDb()
-      this.removeCodeByUser(appid, userid) // 清空此用户的验证码
+      const lowClient = this.getLowDbClient()
       lowClient.get('captchas').push(data).write() // 添加
+    } else if (this.storageType === "redis") {
+      const redisClient = await this.getRedisClient()
+      await redisClient.store(appid, userid, data, this.expire)
     } else {
       return [false, "暂不支持的储存方式"]
     }
@@ -91,19 +222,19 @@ class Captcha {
    * @param {*} strictMode Y | N 检验大小写
    * @returns 
    */
-  authCode(appid, userid, code, strictMode = "N") {
+  async authCode(appid, userid, code, strictMode = "N") {
     if (!userid || !appid || !code) {
       return [false, "参数缺失"]
     }
 
     if (this.masterCaptcha && this.masterCaptcha === code) { //万能验证码
-      this.removeCodeByUser(appid, userid)
+      await this.removeCodeByUser(appid, userid)
       return [ true, { appid, userid, code } ]
     }
 
     let captchaCode, current = Date.now()
     if (this.storageType === "lowdb") {
-      const lowClient = this.getLowDb()
+      const lowClient = this.getLowDbClient()
       let captchaCodes = lowClient
         .get('captchas')
         .filter( v => {
@@ -119,14 +250,28 @@ class Captcha {
       if (captchaCodes.length === 0)
         return [false, "验证码错误"]
       if (captchaCodes.length > 1) {
-        this.removeCodeByUser(appid, userid)
+        await this.removeCodeByUser(appid, userid)
         return [false, "验证码获取错误"]
       }
 
       captchaCode = captchaCodes[0]
-      this.removeCodeByUser(appid, userid)
+      await this.removeCodeByUser(appid, userid)
       if (captchaCode.expire_at < current) { // 验证码过期
         return [false, "验证码已过期"]
+      }
+    } else if (this.storageType === "redis") {
+      const redisClient = await this.getRedisClient()
+      captchaCode = await redisClient.get(appid, userid)
+      if (!captchaCode)
+        return [false, "验证码错误"]
+
+      let pass
+      if (strictMode === "Y") pass = captchaCode.code === code
+      else pass = captchaCode.code.toLowerCase() === code.toLowerCase()
+      if (!pass) {
+        return [false, "验证码错误"]
+      } else {
+        await this.removeCodeByUser(appid, userid)
       }
     } else {
       return [false, "暂不支持的储存方式"]
@@ -138,13 +283,16 @@ class Captcha {
    * 删除用户验证码
    * @returns 
    */
-  removeCodeByUser(appid, userid) {
+  async removeCodeByUser(appid, userid) {
     if (this.storageType === "lowdb") {
       this
-        .getLowDb()
+        .getLowDbClient()
         .get('captchas')
         .remove( { appid, userid } )
         .write()
+    } else if (this.storageType === "redis") {
+      const redisClient = await this.getRedisClient()
+      await redisClient.del(appid, userid)
     } else {
       return [false, "暂不支持的储存方式"]
     }
@@ -154,7 +302,7 @@ class Captcha {
   /**
    * 
    */
-  getLowDb() {
+  getLowDbClient() {
     if (this.lowClient) {
       return this.lowClient
     }
@@ -165,6 +313,17 @@ class Captcha {
 
     this.lowClient = db
     return  this.lowClient
+  }
+  /**
+   * 
+   */
+  async getRedisClient() {
+    if (this.redisClient) {
+      return this.redisClient
+    }
+
+    this.redisClient = await InRedis.create()
+    return this.redisClient
   }
 }
 

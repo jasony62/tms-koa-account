@@ -63,17 +63,32 @@ class TmsKoaAccount extends Koa {
     /**
      * 初始化lowdb
      */
-     const lowdbConfig = loadConfig('lowdb', {})
-     if (lowdbConfig && lowdbConfig.disabled !== true) {
-       LowDbContext = require('./context/lowdb').Context
-       try {
-         await LowDbContext.init(lowdbConfig)
-         Context.LowDbContext = LowDbContext
-       } catch (e) {
-         let logMsg = `初始化[lowdb]配置失败`
-         logger.isDebugEnabled() ? logger.debug(logMsg, e) : logger.warn(logMsg)
-       }
-     }
+    const lowdbConfig = loadConfig('lowdb', {})
+    if (lowdbConfig && lowdbConfig.disabled !== true) {
+      LowDbContext = require('./context/lowdb').Context
+      try {
+        await LowDbContext.init(lowdbConfig)
+        Context.LowDbContext = LowDbContext
+      } catch (e) {
+        let logMsg = `初始化[lowdb]配置失败`
+        logger.isDebugEnabled() ? logger.debug(logMsg, e) : logger.warn(logMsg)
+      }
+    }
+    
+    /**
+     * 初始化redis
+    */
+    const redisConfig = loadConfig('redis')
+    if (redisConfig && redisConfig.disabled !== true) {
+      try {
+        const RedisContext = require('tms-koa/lib/context/redis').Context
+        await RedisContext.init(redisConfig)
+        Context.RedisContext = RedisContext
+      } catch (e) {
+        let logMsg = `初始化[redis]配置失败`
+        logger.isDebugEnabled() ? logger.debug(logMsg, e) : logger.warn(logMsg)
+      }
+    }
 
     /**
      * 支持跨域

@@ -1,5 +1,5 @@
 const config = {
-  file: "lowdb.local.json"
+  file: "_lowdb.json"
 }
 
 module.exports = config
