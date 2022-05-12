@@ -3,7 +3,7 @@ module.exports = {
   name: 'tms-koa-account-demo2',
   router: {
     auth: {
-      prefix: 'auth' // 接口调用url的前缀
+      // prefix: "" // 接口调用url的前缀
     },
   }
 }
