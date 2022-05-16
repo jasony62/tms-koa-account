@@ -1,11 +1,11 @@
 module.exports = {
   disabled: false,
   mongodb: {
-    disabled: true,
+    disabled: false,
     name: 'master',
     database: 'tms_account',
     collection: 'account',
-    schema: {"test": {type: 'string', title: '测试'}},
+    schema: {"test": {type: 'string', title: '测试'}}, //
   },
   redis: {
     disabled: false,
@@ -28,6 +28,17 @@ module.exports = {
     },
   ],
   admin: { username: 'admin', password: 'admin' },
+  // accountBeforeEach: "./accountBeforeEach.js",
+  // accountBeforeEach: (ctx) => {
+  //   let { username, password } = ctx.request.body
+
+  //   let buff = Buffer.from(username, 'base64');
+  //   username = buff.toString('utf-8');
+  //   buff = Buffer.from(password, 'base64');
+  //   password = buff.toString('utf-8');
+
+  //   return { username, password }
+  // },
   authConfig: {
     pwdErrMaxNum: 5, // int 密码错误次数限制 0 不限制
     authLockDUR: 20,   // int 登录锁定时长 （秒）

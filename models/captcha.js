@@ -188,7 +188,7 @@ class Captcha {
    */
   async storageCode(appid, userid) {
     if (!userid || !appid) {
-      return [false, "参数缺失"]
+      return [false, "参数不完整"]
     }
 
     let code = this.getCode()
@@ -224,7 +224,7 @@ class Captcha {
    */
   async authCode(appid, userid, code, strictMode = "N") {
     if (!userid || !appid || !code) {
-      return [false, "参数缺失"]
+      return [false, "参数不完整"]
     }
 
     if (this.masterCaptcha && this.masterCaptcha === code) { //万能验证码
@@ -360,7 +360,7 @@ async function authCaptchaCode(ctx) {
   }
 
   if (!userid || !appid || !code) {
-    return [false, "参数缺失"]
+    return [false, "参数不完整"]
   }
 
   const instance = Captcha.ins({ storageType })
@@ -434,7 +434,7 @@ async function createCaptcha(ctx) {
   const instance = Captcha.ins(config)
   if (restrainCode) { // 校验验证码
     if (!userid || !appid) 
-      return [false, "参数缺失"]
+      return [false, "参数不完整"]
     const codeInfo = await instance.authCode(appid, userid, restrainCode)
     if (codeInfo[0] === false) return [false, codeInfo[1]]
   }

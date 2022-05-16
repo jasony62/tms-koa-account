@@ -1,7 +1,7 @@
 module.exports = {
   disabled: false,
   mongodb: {
-    disabled: false,
+    disabled: true,
     name: 'master',
     database: 'tms_account',
     collection: 'account',
