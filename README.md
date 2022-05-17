@@ -54,7 +54,7 @@ module.exports = {
     name: 'master',
     database: 'tms_account',
     collection: 'account',
-    schema: {"test": {type: 'string', title: '测试'}},
+    schema: {"test": {type: 'string', title: '测试'}},   // 集合中药保留的账号信息字段
   },
   // redis: {
   //   name: master
@@ -104,6 +104,7 @@ module.exports = {
 | ------------- | ---------------------------------- | -------- | ---- |
 | mongodb       | 存储账号数据的 MongoDB 设置        | object   | 否   |
 | mongodb.name  | `tms-koa`配置的`MongoDB`连接名称。 | object   | 否   |
+| mongodb.schema | 账号集合中中要保留的账号信息字段 | object   | 否   |
 | accounts      | 存储账号数据的数据                 | object[] | 否   |
 | admin         | 管理员账号                         | object   | 否   |
 | authConfig    | 登录或注册时的检查                 | object   | 否   |

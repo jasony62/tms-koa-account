@@ -37,10 +37,14 @@ function initRouter(instance, appConfig) {
 /* 初始化访问控制 */
 function initAuth(instance, accountConfig) {
   const captcha = require("../models/captcha")
+  const authenticate = require("../models/authenticate")
+  const register = require("../models/register")
 
   const authConfig = {}
 
   if (!accountConfig.captchaConfig || accountConfig.captchaConfig.disabled !== true) authConfig.captcha = captcha
+  authConfig.authenticate = authenticate
+  authConfig.register = register
 
   instance.auth = authConfig
 }
@@ -51,7 +55,7 @@ class Context {
   }
   get routerAuthPrefix() {
     // 路由前缀必须以反斜杠开头
-    let prefix = _.get(this, ['router', 'auth', 'prefix'], '')
+    let prefix = _.get(this, ['router', 'auth', 'prefix'], 'auth')
     if (prefix && !/^\//.test(prefix)) prefix = `/${prefix}`
     return prefix
   }
@@ -69,7 +73,7 @@ Context.init = (function () {
 
     initRouter(_instance, appConfig)
 
-    initAuth(_instance, accountConfig)
+    if (accountConfig && accountConfig.disabled !== true) initAuth(_instance, accountConfig)
 
     Context.insSync = function () {
       return _instance

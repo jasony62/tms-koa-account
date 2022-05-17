@@ -188,7 +188,7 @@ class Captcha {
    */
   async storageCode(appid, userid) {
     if (!userid || !appid) {
-      return [false, "参数缺失"]
+      return [false, "参数不完整"]
     }
 
     let code = this.getCode()
@@ -212,7 +212,7 @@ class Captcha {
       return [false, "暂不支持的储存方式"]
     }
 
-    return [true]
+    return [true, code]
   }
   /**
    * 
@@ -224,7 +224,7 @@ class Captcha {
    */
   async authCode(appid, userid, code, strictMode = "N") {
     if (!userid || !appid || !code) {
-      return [false, "参数缺失"]
+      return [false, "参数不完整"]
     }
 
     if (this.masterCaptcha && this.masterCaptcha === code) { //万能验证码
@@ -339,54 +339,6 @@ Captcha.ins = (config = {}) => {
 
 /**
  * 
- * @param {*} ctx 
- * @returns 
- */
-async function createCaptchaCode(ctx) {
-  let storageType, alphabetType, alphabet, codeSize, expire, limit, userid, appid
-
-  if (ctx.request.method === "GET") {
-    storageType = ctx.request.query.storageType
-    alphabetType = ctx.request.query.alphabetType
-    alphabet = ctx.request.query.alphabet
-    codeSize = ctx.request.query.codeSize
-    expire = ctx.request.query.expire
-    limit = ctx.request.query.limit
-    appid = ctx.request.query.appid
-    userid = ctx.request.query.userid
-  } else if (ctx.request.method === "POST") {
-    storageType = ctx.request.body.storageType
-    alphabetType = ctx.request.body.alphabetType
-    alphabet = ctx.request.body.alphabet
-    codeSize = ctx.request.body.codeSize
-    expire = ctx.request.body.expire
-    limit = ctx.request.body.limit
-    appid = ctx.request.body.appid
-    userid = ctx.request.body.userid
-  }
-
-  if (!userid || !appid) {
-    return [false, "参数缺失"]
-  }
-
-  let config = { 
-    storageType, 
-    alphabetType, 
-    alphabet,
-    codeSize, 
-    expire,
-    limit
-  }
-
-  const instance = Captcha.ins(config)
-  const code = instance.getCode()
-  let rst = await instance.storageCode(appid, userid)
-  if (rst[0] === false) return rst
-  
-  return [true, code]
-}
-/**
- * 
  * @param {*}  
  * @returns 
  */
@@ -408,7 +360,7 @@ async function authCaptchaCode(ctx) {
   }
 
   if (!userid || !appid || !code) {
-    return [false, "参数缺失"]
+    return [false, "参数不完整"]
   }
 
   const instance = Captcha.ins({ storageType })
@@ -417,40 +369,106 @@ async function authCaptchaCode(ctx) {
 /**
  * 生成图形验证码
  */
-async function createCaptchaImage(ctx) {
-  let code
-  if (ctx.request.query.code) {
-    code = ctx.request.query.code
-  } else {
-    const rst = await createCaptchaCode(ctx)
-    if (rst[0] === false)
-      return rst
+async function createCaptcha(ctx) {
+  let code, 
+    restrainCode, 
+    storageType, 
+    alphabetType, 
+    alphabet, 
+    codeSize, 
+    expire, 
+    limit, 
+    userid, 
+    appid, 
+    width, 
+    height, 
+    fontSize, 
+    noise, 
+    background,
+    codeType = "image"
 
+  if (ctx.request.method === "GET") {
+    storageType = ctx.request.query.storageType
+    alphabetType = ctx.request.query.alphabetType
+    alphabet = ctx.request.query.alphabet
+    codeSize = ctx.request.query.codeSize
+    expire = ctx.request.query.expire
+    limit = ctx.request.query.limit
+    appid = ctx.request.query.appid
+    userid = ctx.request.query.userid
+    restrainCode = ctx.request.query.restrainCode
+    code = ctx.request.query.code
+    width = ctx.request.query.width
+    height = ctx.request.query.height
+    fontSize = ctx.request.query.fontSize
+    noise = ctx.request.query.noise
+    background = ctx.request.query.background
+    codeType = ctx.request.query.codeType
+  } else if (ctx.request.method === "POST") {
+    storageType = ctx.request.body.storageType
+    alphabetType = ctx.request.body.alphabetType
+    alphabet = ctx.request.body.alphabet
+    codeSize = ctx.request.body.codeSize
+    expire = ctx.request.body.expire
+    limit = ctx.request.body.limit
+    appid = ctx.request.body.appid
+    userid = ctx.request.body.userid
+    restrainCode = ctx.request.body.restrainCode
+    code = ctx.request.body.code
+    width = ctx.request.body.width
+    height = ctx.request.body.height
+    fontSize = ctx.request.body.fontSize
+    noise = ctx.request.body.noise
+    background = ctx.request.body.background
+    codeType = ctx.request.body.codeType
+  }
+
+  let config = { 
+    storageType, 
+    alphabetType, 
+    alphabet,
+    codeSize, 
+    expire,
+    limit
+  }
+  const instance = Captcha.ins(config)
+  if (restrainCode) { // 校验验证码
+    if (!userid || !appid) 
+      return [false, "参数不完整"]
+    const codeInfo = await instance.authCode(appid, userid, restrainCode)
+    if (codeInfo[0] === false) return [false, codeInfo[1]]
+  }
+
+  if (!code) { // 没有就生成code
+    let rst = instance.getCode()
+    rst = await instance.storageCode(appid, userid)
+    if (rst[0] === false) return rst
     code = rst[1]
   }
 
+  // 直接返回验证码
+  if (codeType === "text") 
+    return [ true, code ]
+
   // 生成验证码图片
-  let { width, height, fontSize, noise, background } = ctx.request.query
-  if (background) background = `#${background}`
-  
   let captchaOptions = {}
   captchaOptions.noise = 2 // number of noise lines
   captchaOptions.background = '#48d1cc' // number of noise lines
 
-  width && (captchaOptions.width = width)
-  height && (captchaOptions.height = height)
-  fontSize && (captchaOptions.fontSize = fontSize)
-  noise && (captchaOptions.noise = noise)
-  background && (captchaOptions.background = background)
+  if (width) captchaOptions.width = width
+  if (height) captchaOptions.height = height
+  if (fontSize) captchaOptions.fontSize = fontSize
+  if (noise) captchaOptions.noise = noise
+  if (background) captchaOptions.background = `#${background}`
 
   const svgCaptcha = require('svg-captcha')
-  let image = svgCaptcha(code, captchaOptions)
+  let imageCap = svgCaptcha(code, captchaOptions)
 
-  return [ true, image ]
+  return [ true, imageCap ]
 }
 
-module.exports = createCaptchaImage
-module.exports.createCaptchaCode = createCaptchaCode
-module.exports.createCaptchaImage = createCaptchaImage
+
+module.exports = createCaptcha
+module.exports.createCaptcha = createCaptcha
 module.exports.authCaptchaCode = authCaptchaCode
 module.exports.Captcha = Captcha

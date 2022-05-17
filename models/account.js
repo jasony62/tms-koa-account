@@ -30,7 +30,7 @@ class MongodbModel {
   constructor(mongoClient, database, collection) {
     this.cl = mongoClient.db(database).collection(collection)
   }
-  create(newAccount) {
+  async create(newAccount) {
     // 加密密码
     const salt = ProcessPwd.getSalt() // 加密密钥
     const pwdProcess = new ProcessPwd(newAccount.password, salt)
@@ -41,7 +41,7 @@ class MongodbModel {
   }
   processAndCreate(userInfo) {
     return new Promise(async (resolve, reject) => {
-      if (["password", "username", "nickname"].every(v => userInfo[v]) === false) return reject("用户信息不完整")
+      if (["password", "username"].every(v => userInfo[v]) === false) return reject("用户信息不完整")
       
       let {username: account, password, nickname, isAdmin, allowMultiLogin, ...other} = userInfo
       // 检查账号是否已存在
@@ -172,6 +172,13 @@ class FileModel {
     return Promise.resolve(newAccount)
   }
   processAndCreate(newAccount) {
+    const found = this.accounts.find(
+      (account) =>
+        account.username === newAccount.username
+    )
+    if (found) {
+      return Promise.reject("账号已存在")
+    }
     return this.create(newAccount)
   }
   forbid(id) {
@@ -232,11 +239,13 @@ if (AccountConfig && AccountConfig.disabled !== true) {
         database,
         collection
       )
+      logger.debug("指定账号储存方式【mongodb】")
     } else {
       Account = new Proxy({}, unsupportHandler)
     }
   } else if (Array.isArray(accounts)) {
     Account = new FileModel(accounts)
+    logger.debug("指定账号储存方式【File】")
   } else {
     logger.warn('配置文件[account]没有指定有效账号存储方式')
     Account = new Proxy({}, unsupportHandler)
