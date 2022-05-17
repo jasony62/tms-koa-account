@@ -14,6 +14,8 @@ class PasswordValidator {
       pwdBlack: Array.isArray(config.pwdBlack) ? config.pwdBlack : [], // 密码黑名单
       hasSpaces: config.hasSpaces ? true : false, // 是否包含空格
       hasAccount: config.hasAccount ? true : false, // 是否包含空格
+      hasKeyBoardContinuousChar: config.hasKeyBoardContinuousChar ? true : false, // 是否包含空格
+      hasKeyBoardContinuousCharSize: config.hasKeyBoardContinuousCharSize ? parseInt(config.hasKeyBoardContinuousCharSize) : 3, // 是否包含空格
     }
     
     this.containProjects = []
@@ -36,7 +38,7 @@ class PasswordValidator {
   validate() {
     const PwdValidator = require('password-validator')
 
-    const { min, max, pwdBlack, hasSpaces, hasAccount } = this.config
+    const { min, max, pwdBlack, hasSpaces, hasAccount, hasKeyBoardContinuousChar, hasKeyBoardContinuousCharSize = 3 } = this.config
     
     const schema = new PwdValidator()
     schema
@@ -51,6 +53,11 @@ class PasswordValidator {
       let account = this.options.account
       let reverseAccount = account.split('').reverse().join('')
       if (this.pwd.includes(account) || this.pwd.includes(reverseAccount)) return [false, "密码中不能包含账号"]
+    }
+    // 密码中不能包含 n 位以上的连续键盘字符
+    if (hasKeyBoardContinuousChar === false) {
+      let rst = PasswordValidator.isKeyBoardContinuousChar(this.pwd, hasKeyBoardContinuousCharSize)
+      if (rst === true) return [false, `密码中不能包含连续${hasKeyBoardContinuousCharSize}位的键盘序字符`]
     }
     //
     if (this.containProjects) {
@@ -89,6 +96,20 @@ class PasswordValidator {
 
     return [true]
   }
+}
+
+// 判断键盘连续字符
+PasswordValidator.isKeyBoardContinuousChar = (pwd, keyBoardSize = 3) => {
+  const keyBoardContinuousChar = '1234567890qwertyuiopasdfghjklzxcvbnmqazwsxedcrfvtgbyhnujmokmijnuhbygvtfcrdxesz'
+  const reverseKeyBoardContinuousChar = keyBoardContinuousChar.split('').reverse().join('')
+
+  for (let i = 0; i < pwd.length - keyBoardSize + 1; i++) {
+    const pwdSizeChar = pwd.substr(i, keyBoardSize)
+    if (keyBoardContinuousChar.indexOf(pwdSizeChar) !== -1 || reverseKeyBoardContinuousChar.indexOf(pwdSizeChar) !== -1) {
+      return true
+    }
+  }
+  return false
 }
 
 const SALT = Symbol('salt')
