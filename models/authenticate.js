@@ -1,9 +1,9 @@
 const { Client } = require('tms-koa')
 const { AccountConfig } = require('../config')
-const { captchaConfig : CaptchaConfig } = AccountConfig
-const { authCaptchaCode } = require("../models/captcha")
-const PATH = require("path")
-const fs = require("fs")
+const { captchaConfig: CaptchaConfig } = AccountConfig
+const { authCaptchaCode } = require('../models/captcha')
+const PATH = require('path')
+const fs = require('fs')
 
 /**
  * 根据http请求中包含的信息获得用户数据，支持异步调用
@@ -15,11 +15,10 @@ module.exports = async function (ctx) {
   // 账号、密码前置处理
   if (AccountConfig.accountBeforeEach) {
     let func
-    if (typeof AccountConfig.accountBeforeEach === "string") {
+    if (typeof AccountConfig.accountBeforeEach === 'string') {
       const funcPath = PATH.resolve(AccountConfig.accountBeforeEach)
-      if (fs.existsSync(funcPath))
-        func = require(funcPath)
-    } else if (typeof AccountConfig.accountBeforeEach === "function") {
+      if (fs.existsSync(funcPath)) func = require(funcPath)
+    } else if (typeof AccountConfig.accountBeforeEach === 'function') {
       func = AccountConfig.accountBeforeEach
     }
     let rst = await func(ctx)
@@ -39,8 +38,7 @@ module.exports = async function (ctx) {
     // 验证码
     if (!CaptchaConfig || CaptchaConfig.disabled !== true) {
       const rst = await authCaptchaCode(ctx)
-      if (rst[0] === false)
-        return rst
+      if (rst[0] === false) return rst
     }
     /**mongodb存储账号 */
     let found = await Account.authenticate(username, password, ctx)
@@ -56,5 +54,5 @@ module.exports = async function (ctx) {
     } else return [false, found[1]]
   }
 
-  return [false, "没有找到匹配的账号"]
+  return [false, '没有找到匹配的账号']
 }

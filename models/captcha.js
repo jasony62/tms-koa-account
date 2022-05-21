@@ -1,11 +1,10 @@
 const _ = require('lodash')
 const { customAlphabet } = require('nanoid')
-const { Context: lowdbContext } = require("../context/lowdb")
+const { Context: lowdbContext } = require('../context/lowdb')
 const { AccountConfig, loadConfig } = require('../config')
 const CaptchaConfig = AccountConfig.captchaConfig || {}
 const log4js = require('@log4js-node/log4js-api')
 const logger = log4js.getLogger('tms-koa-account-captcha')
-
 
 /**
  * 在redis中保存客户端的验证码
@@ -19,8 +18,10 @@ class InRedis {
     this.redisClient = redisClient
   }
   //
-  key (appid, userid) {
-    return `${AccountConfig.prefix || 'tms-koa-account'}:captcha:${appid}:${userid}`
+  key(appid, userid) {
+    return `${
+      AccountConfig.prefix || 'tms-koa-account'
+    }:captcha:${appid}:${userid}`
   }
   // 连接redis
   static create() {
@@ -28,19 +29,22 @@ class InRedis {
     if (!redisContext) {
       redisContext = require('tms-koa').Context.RedisContext
     }
-    if (!redisContext) throw new Error("未找到redis连接")
+    if (!redisContext) throw new Error('未找到redis连接')
 
-    let redisConfig = loadConfig("redis")
+    let redisConfig = loadConfig('redis')
     if (!redisConfig.host || !redisConfig.port) {
-      let redisName = AccountConfig.redis && AccountConfig.redis.name ? AccountConfig.redis.name : "master"
+      let redisName =
+        AccountConfig.redis && AccountConfig.redis.name
+          ? AccountConfig.redis.name
+          : 'master'
       redisConfig = redisConfig[redisName]
       if (!redisConfig) {
-        return Promise.reject("未找到指定的redis配置信息")
+        return Promise.reject('未找到指定的redis配置信息')
       }
     }
-    return redisContext.ins(redisConfig).then(
-      (context) => new InRedis(context.redisClient)
-    )
+    return redisContext
+      .ins(redisConfig)
+      .then((context) => new InRedis(context.redisClient))
   }
   quit() {
     //this.redisClient.quit()
@@ -55,13 +59,9 @@ class InRedis {
   store(appid, userid, data, expire_in) {
     let key = this.key(appid, userid)
     return new Promise((resolve) => {
-      this.redisClient.set(
-        key,
-        JSON.stringify(data),
-        () => {
-          this.expire(appid, userid, expire_in).then(() => resolve(expire_in))
-        }
-      )
+      this.redisClient.set(key, JSON.stringify(data), () => {
+        this.expire(appid, userid, expire_in).then(() => resolve(expire_in))
+      })
     })
   }
   /**
@@ -109,9 +109,9 @@ class InRedis {
   /**
    * 获得对应的数据
    *
-   * @param {string} 
+   * @param {string}
    */
-  get(appid, userid, ) {
+  get(appid, userid) {
     let key = this.key(appid, userid)
     return new Promise((resolve, reject) => {
       this.redisClient.get(key, (e, r) => {
@@ -132,19 +132,18 @@ class InRedis {
   }
 }
 
-
 /**
- * 
+ *
  */
 class Captcha {
   constructor(config) {
-    this.numberAlphabet = "1234567890"
-    this.upperCaseAlphabet = "QWERTYUIOPASDFGHJKLZXCVBNM"
-    this.lowerCaseAlphabet = "qwertyuiopasdfghjklzxcvbnm"
+    this.numberAlphabet = '1234567890'
+    this.upperCaseAlphabet = 'QWERTYUIOPASDFGHJKLZXCVBNM'
+    this.lowerCaseAlphabet = 'qwertyuiopasdfghjklzxcvbnm'
 
-    this.storageType = config.storageType || "lowdb"
+    this.storageType = config.storageType || 'lowdb'
     this.masterCaptcha = config.masterCaptcha || null
-    this.alphabetType = config.alphabetType || "number,upperCase,lowerCase"
+    this.alphabetType = config.alphabetType || 'number,upperCase,lowerCase'
     this.codeSize = parseInt(config.codeSize) || 4
     this.expire = parseInt(config.expire) || 300
     this.limit = parseInt(config.limit) || 3
@@ -152,27 +151,27 @@ class Captcha {
     if (config.alphabet) {
       this.alphabet = config.alphabet
     } else {
-      let codeAlphabet = ""
-      this.alphabetType.split(",").forEach( v => {
+      let codeAlphabet = ''
+      this.alphabetType.split(',').forEach((v) => {
         switch (v) {
-          case "number":
+          case 'number':
             codeAlphabet += this.numberAlphabet
             break
-          case "upperCase":
+          case 'upperCase':
             codeAlphabet += this.upperCaseAlphabet
             break
-          case "lowerCase":
+          case 'lowerCase':
             codeAlphabet += this.lowerCaseAlphabet
             break
         }
       })
-      if (codeAlphabet.length === 0) throw new Error("验证码字母表为空")
+      if (codeAlphabet.length === 0) throw new Error('验证码字母表为空')
       this.alphabet = codeAlphabet
     }
   }
   /**
-   * 
-   * @returns 
+   *
+   * @returns
    */
   getCode() {
     if (this.code) {
@@ -184,11 +183,11 @@ class Captcha {
     return this.code
   }
   /**
-   * 
+   *
    */
   async storageCode(appid, userid) {
     if (!userid || !appid) {
-      return [false, "参数不完整"]
+      return [false, '参数不完整']
     }
 
     let code = this.getCode()
@@ -197,110 +196,107 @@ class Captcha {
       appid,
       userid,
       code,
-      expire_at: Date.now() + (this.expire * 1000),
-      limit: this.limit
+      expire_at: Date.now() + this.expire * 1000,
+      limit: this.limit,
     }
 
     await this.removeCodeByUser(appid, userid) // 清空此用户的验证码
-    if (this.storageType === "lowdb") {
+    if (this.storageType === 'lowdb') {
       const lowClient = this.getLowDbClient()
       lowClient.get('captchas').push(data).write() // 添加
-    } else if (this.storageType === "redis") {
+    } else if (this.storageType === 'redis') {
       const redisClient = await this.getRedisClient()
       await redisClient.store(appid, userid, data, this.expire)
     } else {
-      return [false, "暂不支持的储存方式"]
+      return [false, '暂不支持的储存方式']
     }
 
     return [true, code]
   }
   /**
-   * 
-   * @param {*} appid 
-   * @param {*} userid 
-   * @param {*} code 
+   *
+   * @param {*} appid
+   * @param {*} userid
+   * @param {*} code
    * @param {*} strictMode Y | N 检验大小写
-   * @returns 
+   * @returns
    */
-  async authCode(appid, userid, code, strictMode = "N") {
+  async authCode(appid, userid, code, strictMode = 'N') {
     if (!userid || !appid || !code) {
-      return [false, "参数不完整"]
+      return [false, '参数不完整']
     }
 
-    if (this.masterCaptcha && this.masterCaptcha === code) { //万能验证码
+    if (this.masterCaptcha && this.masterCaptcha === code) {
+      //万能验证码
       await this.removeCodeByUser(appid, userid)
-      return [ true, { appid, userid, code } ]
+      return [true, { appid, userid, code }]
     }
 
-    let captchaCode, current = Date.now()
-    if (this.storageType === "lowdb") {
+    let captchaCode,
+      current = Date.now()
+    if (this.storageType === 'lowdb') {
       const lowClient = this.getLowDbClient()
       let captchaCodes = lowClient
         .get('captchas')
-        .filter( v => {
+        .filter((v) => {
           let pass = v.appid === appid && v.userid === userid
           if (pass) {
-            if (strictMode === "Y") pass = v.code === code
+            if (strictMode === 'Y') pass = v.code === code
             else pass = v.code.toLowerCase() === code.toLowerCase()
           }
           return pass
-        } )
+        })
         .value()
 
-      if (captchaCodes.length === 0)
-        return [false, "验证码错误"]
+      if (captchaCodes.length === 0) return [false, '验证码错误']
       if (captchaCodes.length > 1) {
         await this.removeCodeByUser(appid, userid)
-        return [false, "验证码获取错误"]
+        return [false, '验证码获取错误']
       }
 
       captchaCode = captchaCodes[0]
       await this.removeCodeByUser(appid, userid)
-      if (captchaCode.expire_at < current) { // 验证码过期
-        return [false, "验证码已过期"]
+      if (captchaCode.expire_at < current) {
+        // 验证码过期
+        return [false, '验证码已过期']
       }
-    } else if (this.storageType === "redis") {
+    } else if (this.storageType === 'redis') {
       const redisClient = await this.getRedisClient()
       captchaCode = await redisClient.get(appid, userid)
-      if (!captchaCode)
-        return [false, "验证码错误"]
+      if (!captchaCode) return [false, '验证码错误']
 
       let pass
-      if (strictMode === "Y") pass = captchaCode.code === code
+      if (strictMode === 'Y') pass = captchaCode.code === code
       else pass = captchaCode.code.toLowerCase() === code.toLowerCase()
       if (!pass) {
-        return [false, "验证码错误"]
+        return [false, '验证码错误']
       } else {
         await this.removeCodeByUser(appid, userid)
       }
     } else {
-      return [false, "暂不支持的储存方式"]
+      return [false, '暂不支持的储存方式']
     }
 
-    return [ true, captchaCode ]
+    return [true, captchaCode]
   }
   /**
    * 删除用户验证码
-   * @returns 
+   * @returns
    */
   async removeCodeByUser(appid, userid) {
-    if (this.storageType === "lowdb") {
-      this
-        .getLowDbClient()
-        .get('captchas')
-        .remove( { appid, userid } )
-        .write()
-    } else if (this.storageType === "redis") {
+    if (this.storageType === 'lowdb') {
+      this.getLowDbClient().get('captchas').remove({ appid, userid }).write()
+    } else if (this.storageType === 'redis') {
       const redisClient = await this.getRedisClient()
       await redisClient.del(appid, userid)
     } else {
-      return [false, "暂不支持的储存方式"]
+      return [false, '暂不支持的储存方式']
     }
 
-    return [ true ]
+    return [true]
   }
   /**
-   * 
+   *
    */
   getLowDbClient() {
     if (this.lowClient) {
@@ -312,10 +308,10 @@ class Captcha {
     db.defaults({ captchas: [] }).write()
 
     this.lowClient = db
-    return  this.lowClient
+    return this.lowClient
   }
   /**
-   * 
+   *
    */
   async getRedisClient() {
     if (this.redisClient) {
@@ -328,30 +324,26 @@ class Captcha {
 }
 
 Captcha.ins = (config = {}) => {
-  let config2 = _.merge(
-    {},
-    CaptchaConfig, 
-    config
-  )
+  let config2 = _.merge({}, CaptchaConfig, config)
 
   return new Captcha(config2)
 }
 
 /**
- * 
- * @param {*}  
- * @returns 
+ *
+ * @param {*}
+ * @returns
  */
 async function authCaptchaCode(ctx) {
   let storageType, userid, appid, code, strictMode
-  
-  if (ctx.request.method === "GET") {
+
+  if (ctx.request.method === 'GET') {
     storageType = ctx.request.query.storageType
     appid = ctx.request.query.appid
     userid = ctx.request.query.userid
     code = ctx.request.query.code
     strictMode = ctx.request.query.strictMode
-  } else if (ctx.request.method === "POST") {
+  } else if (ctx.request.method === 'POST') {
     storageType = ctx.request.body.storageType
     appid = ctx.request.body.appid
     userid = ctx.request.body.userid
@@ -360,7 +352,7 @@ async function authCaptchaCode(ctx) {
   }
 
   if (!userid || !appid || !code) {
-    return [false, "参数不完整"]
+    return [false, '参数不完整']
   }
 
   const instance = Captcha.ins({ storageType })
@@ -370,24 +362,24 @@ async function authCaptchaCode(ctx) {
  * 生成图形验证码
  */
 async function createCaptcha(ctx) {
-  let code, 
-    restrainCode, 
-    storageType, 
-    alphabetType, 
-    alphabet, 
-    codeSize, 
-    expire, 
-    limit, 
-    userid, 
-    appid, 
-    width, 
-    height, 
-    fontSize, 
-    noise, 
+  let code,
+    restrainCode,
+    storageType,
+    alphabetType,
+    alphabet,
+    codeSize,
+    expire,
+    limit,
+    userid,
+    appid,
+    width,
+    height,
+    fontSize,
+    noise,
     background,
-    codeType = "image"
+    codeType = 'image'
 
-  if (ctx.request.method === "GET") {
+  if (ctx.request.method === 'GET') {
     storageType = ctx.request.query.storageType
     alphabetType = ctx.request.query.alphabetType
     alphabet = ctx.request.query.alphabet
@@ -404,7 +396,7 @@ async function createCaptcha(ctx) {
     noise = ctx.request.query.noise
     background = ctx.request.query.background
     codeType = ctx.request.query.codeType
-  } else if (ctx.request.method === "POST") {
+  } else if (ctx.request.method === 'POST') {
     storageType = ctx.request.body.storageType
     alphabetType = ctx.request.body.alphabetType
     alphabet = ctx.request.body.alphabet
@@ -423,23 +415,24 @@ async function createCaptcha(ctx) {
     codeType = ctx.request.body.codeType
   }
 
-  let config = { 
-    storageType, 
-    alphabetType, 
+  let config = {
+    storageType,
+    alphabetType,
     alphabet,
-    codeSize, 
+    codeSize,
     expire,
-    limit
+    limit,
   }
   const instance = Captcha.ins(config)
-  if (restrainCode) { // 校验验证码
-    if (!userid || !appid) 
-      return [false, "参数不完整"]
+  if (restrainCode) {
+    // 校验验证码
+    if (!userid || !appid) return [false, '参数不完整']
     const codeInfo = await instance.authCode(appid, userid, restrainCode)
     if (codeInfo[0] === false) return [false, codeInfo[1]]
   }
 
-  if (!code) { // 没有就生成code
+  if (!code) {
+    // 没有就生成code
     let rst = instance.getCode()
     rst = await instance.storageCode(appid, userid)
     if (rst[0] === false) return rst
@@ -447,8 +440,7 @@ async function createCaptcha(ctx) {
   }
 
   // 直接返回验证码
-  if (codeType === "text") 
-    return [ true, code ]
+  if (codeType === 'text') return [true, code]
 
   // 生成验证码图片
   let captchaOptions = {}
@@ -464,9 +456,8 @@ async function createCaptcha(ctx) {
   const svgCaptcha = require('svg-captcha')
   let imageCap = svgCaptcha(code, captchaOptions)
 
-  return [ true, imageCap ]
+  return [true, imageCap]
 }
-
 
 module.exports = createCaptcha
 module.exports.createCaptcha = createCaptcha
