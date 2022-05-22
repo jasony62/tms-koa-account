@@ -15,12 +15,12 @@ const Auth = AppContext.insSync().auth
 /**
  * 验证 验证码
  */
-router.all('/authCaptcha', async (ctx) => {
+router.all('/checkCaptcha', async (ctx) => {
   if (!Auth.captcha)
     return (ctx.response.body = new ResultFault('没有指定验证码库'))
 
   try {
-    const rst = await Auth.captcha.authCaptchaCode(ctx)
+    const rst = await Auth.captcha.checkCaptcha(ctx)
     if (rst[0] === false) {
       return (ctx.response.body = new ResultFault(rst[1]))
     }

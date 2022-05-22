@@ -21,7 +21,9 @@ module.exports = {
       npm: {
         disabled: false,
         id: 'tms-koa-account',
-        authentication: 'models/captcha',
+        module: 'models/captcha',
+        checker: 'checkCaptcha',
+        generator: "createCaptcha"
       },
     },
     client: {

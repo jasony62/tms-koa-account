@@ -16,12 +16,23 @@ module.exports = {
       npm: {
         disabled: false,
         id: 'tms-koa-account',
+        // module: '',
         authentication: 'models/authenticate',
+        register: 'models/register',
       },
     },
   },
 }
 ```
+
+| 字段                      | 说明                                                         | 类型   | 必填 |
+| ------------------------- | ------------------------------------------------------------ | ------ | ---- |
+| client.npm.id             | 第三方模块                                                   | string | Y    |
+| client.npm.module         | 登录注册方法的独立模块文件                                   | string | Y    |
+| client.npm.authentication | 登录函数（如果没有module，应为模块文件，如果有module，为具体方法名） | string | Y    |
+| client.npm.register       | 注册函数（如果没有module，应为模块文件，如果有module，为具体方法名） | string | Y    |
+
+
 
 # tms-koa 验证码方法
 
@@ -35,12 +46,21 @@ module.exports = {
       npm: {
         disabled: false,
         id: 'tms-koa-account',
-        authentication: 'models/captcha',
+        module: 'models/captcha', 
+        checker: 'checkCaptcha',
+        generator: "createCaptcha"
       },
     },
   },
 }
 ```
+
+| 字段                  | 说明                 | 类型   | 必填 |
+| --------------------- | -------------------- | ------ | ---- |
+| captcha.npm.checker   | 验证码检查函数（……） | string | Y    |
+| captcha.npm.generator | 验证码生成函数（……） | string | Y    |
+
+
 
 # 账号管理配置文件
 
@@ -76,6 +96,17 @@ module.exports = {
     },
   ],
   admin: { username: 'admin', password: 'admin' },
+  // accountBeforeEach: "./accountBeforeEach.js", // 登录、注册 前置步骤，如：对账号密码解密等
+  // accountBeforeEach: (ctx) => {
+  //   let { username, password } = ctx.request.body
+
+  //   let buff = Buffer.from(username, 'base64');
+  //   username = buff.toString('utf-8');
+  //   buff = Buffer.from(password, 'base64');
+  //   password = buff.toString('utf-8');
+
+  //   return { username, password }
+  // },
   authConfig: {
     pwdErrMaxNum: 5, // int 密码错误次数限制 0 不限制
     authLockDUR: 20, // int 登录锁定时长 （秒）
@@ -103,17 +134,19 @@ module.exports = {
   //   expire: 300, // 过期时间 s 默认300
   // }
 }
+
 ```
 
-| 字段           | 说明                               | 类型     | 必填 |
-| -------------- | ---------------------------------- | -------- | ---- |
-| mongodb        | 存储账号数据的 MongoDB 设置        | object   | 否   |
-| mongodb.name   | `tms-koa`配置的`MongoDB`连接名称。 | object   | 否   |
-| mongodb.schema | 账号集合中中要保留的账号信息字段   | object   | 否   |
-| accounts       | 存储账号数据的数据                 | object[] | 否   |
-| admin          | 管理员账号                         | object   | 否   |
-| authConfig     | 登录或注册时的检查                 | object   | 否   |
-| captchaConfig  | 验证码生成配置                     | object   | 否   |
+| 字段              | 说明                                      | 类型            | 必填 |
+| ----------------- | ----------------------------------------- | --------------- | ---- |
+| mongodb           | 存储账号数据的 MongoDB 设置               | object          | 否   |
+| mongodb.name      | `tms-koa`配置的`MongoDB`连接名称。        | object          | 否   |
+| mongodb.schema    | 账号集合中中要保留的账号信息字段          | object          | 否   |
+| accounts          | 存储账号数据的数据                        | object[]        | 否   |
+| admin             | 管理员账号                                | object          | 否   |
+| accountBeforeEach | 登录、注册 前置步骤，如：对账号密码解密等 | string\function | 否   |
+| authConfig        | 登录或注册时的检查                        | object          | 否   |
+| captchaConfig     | 验证码生成配置                            | object          | 否   |
 
 # authConfig 字段说明
 
@@ -138,16 +171,16 @@ module.exports = {
 
 `mongodb`优先于`accounts`设置。
 
-# captchaConfig 字段说明
+# captchaConfig字段说明
 
-| 字段          | 说明                                                               | 类型    | 默认                       | 必填 |
-| ------------- | ------------------------------------------------------------------ | ------- | -------------------------- | ---- |
-| disabled      | 是否启用验证码                                                     | boolean | false                      | 否   |
-| storageType   | 验证码存储方式 支持 redis、lowdb                                   | string  | lowdb                      | 否   |
-| masterCaptcha | 万能验证码                                                         | string  |                            | 否   |
-| codeSize      | 验证码长度                                                         | int     | 4                          | 否   |
+| 字段          | 说明                                                         | 类型    | 默认                       | 必填 |
+| ------------- | ------------------------------------------------------------ | ------- | -------------------------- | ---- |
+| disabled      | 是否启用验证码                                               | boolean | false                      | 否   |
+| storageType   | 验证码存储方式 支持 redis、lowdb                             | string  | lowdb                      | 否   |
+| masterCaptcha | 万能验证码                                                   | string  |                            | 否   |
+| codeSize      | 验证码长度                                                   | int     | 4                          | 否   |
 | alphabetType  | 验证码字母表类型 与 alphabetType 不可公用，优先级大于 alphabetType | string  | number,upperCase,lowerCase | 否   |
-| expire        | 验证码有效期（s）                                                  | int     | 300                        | 否   |
+| expire        | 验证码有效期（s）                                            | int     | 300                        | 否   |
 
 # 密码强度校验类
 
@@ -178,17 +211,45 @@ const checkRst = pwdProcess.pwdStrengthCheck()
 
 ### 获取验证码
 
-> curl 'http://localhost:3001/auth/captcha?appid=oauth&userid=aly21'
+> curl 'http://localhost:3001/auth/captcha?appid=oauth&captchaid=aly21'
+
+附加参数
+
+```
+  storageType: "lowdb", // 验证码存储方式  lowdb | redis
+  codeSize: 4, //验证码长度  默认4
+  alphabetType: "number,upperCase,lowerCase", // 字母表类型 默认 数字+大写字母+小写字母
+  alphabet: "1234567890" // 与alphabetType不可公用，优先级大于alphabetType
+  expire: 300, // 过期时间 s 默认300,
+  returnType: "text" // 返回验证码类型 text | image  默认 image
+```
 
 ### 登录
 
-> curl -H "Content-Type: application/json" -X POST -d '{ "appid":"oauth","userid":"aly21","code":"dha2c","username": "admin", "password":"admin" }' http://localhost:3001/auth/authenticate
+> curl -H "Content-Type: application/json" -X POST -d '{ "appid":"oauth","captchaid":"aly21","code":"dha2c","username": "admin", "password":"admin" }' http://localhost:3001/auth/authenticate
 
 ### 获取用户列表
 
 > curl 'http://localhost:3001/api/account/admin/list?access_token='
 
 ### 创建账号
+
+> curl -H "Content-Type: application/json" -X POST -d '{"username": "user1", "password":"user1", "nickname": "user1" }' 'http://localhost:3001/api/account/admin/create?access_token='
+
+### 检验验证码
+
+> curl 'http://localhost:3001/auth/checkCaptcha?appid=oauth&captchaid=aly22&code=cxpr6'
+
+附加参数
+
+```
+strictMode: "N" // Y | N 检验大小写
+```
+
+### 用户注册 
+
+> curl -H "Content-Type: application/json" -X POST -d '{"username":"user1","password":"user1","appid":"oauth","captchaid":"aly21","code":"aabb"}' 'http://localhost:3001/auth/register'
+
 
 > curl -H "Content-Type: application/json" -X POST -d '{"username": "user1", "password":"user1", "nickname": "user1" }' 'http://localhost:3001/api/account/admin/create?access_token='
 
@@ -204,7 +265,7 @@ module.exports = {
   name: 'tms-koa-account-demo2',
   router: {
     auth: {
-      prefix: 'auth', // 接口调用url的前缀
+      // prefix: 'auth' // 接口调用url的前缀
     },
   },
 }
@@ -238,12 +299,26 @@ tmsKoaAccount.startup()
 
 ### 生成验证码 GET|POST
 
-> curl 'http://localhost:3002/auth/auth/captcha?appid=pool&userid=aly21&alphabet=QWERTYUIOPqwertyuiop1234567890&expire=300&alphabetType=number&codeSize=6'
+> curl 'http://localhost:3002/auth/captcha?appid=pool&userid=aly21'
+>
+> 附件参数
+>
+>  "alphabet":"QWERTYUIIIOPASDFGHJKL", // 验证码字母表与alphabetType不可公用，优先级大于alphabetType
+>
+>  "expire":200, // 过期时间 s 默认300
+>
+>  "alphabetType":"number,upperCase,lowerCase",  // 字母表生产类型 默认 数字+大写字母+小写字母
+>
+>  "codeSize":4, //验证码长度  默认4
+>
+>  "storageType":"redis", // 验证码存储方式  lowdb | redis
+>
+>  "returnType":"text" // 返回验证码类型 text | image  默认 image
 
 ### 验证验证码 GET | POST
 
-> curl -H "Content-Type: application/json" -X POST -d '{"appid":"pool","userid":"aly21", "code": "1iwtiO", "strictMode":"N"}' http://localhost:3002/auth/auth/authCaptcha
-
-### 获取验证码图片 GET
-
-> curl 'http://localhost:3002/auth/auth/captchaImages?appid=pool&userid=aly21&code='
+> curl 'localhost:3002/auth/checkCaptcha?appid=order&captchaid=aly22&code=aabb'
+>
+> 附件参数
+>
+> strictMode: "N"  // Y | N 检验大小写

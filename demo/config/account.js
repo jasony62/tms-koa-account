@@ -55,7 +55,7 @@ module.exports = {
   },
   captchaConfig: {
   //   disabled: false,   // boolean 是否启用验证码
-    storageType: "redis", // 验证码存储方式 仅支持 lowdb
+    storageType: "lowdb", // 验证码存储方式 仅支持 lowdb
     masterCaptcha: "aabb",   // string 万能验证码
   //   codeSize: 4,
   //   alphabet: "1234567890"

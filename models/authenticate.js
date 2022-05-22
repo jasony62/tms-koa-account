@@ -1,9 +1,9 @@
 const { Client } = require('tms-koa')
 const { AccountConfig } = require('../config')
-const { captchaConfig: CaptchaConfig } = AccountConfig
-const { authCaptchaCode } = require('../models/captcha')
-const PATH = require('path')
-const fs = require('fs')
+const { captchaConfig : CaptchaConfig } = AccountConfig
+const { checkCaptcha } = require("../models/captcha")
+const PATH = require("path")
+const fs = require("fs")
 
 /**
  * 根据http请求中包含的信息获得用户数据，支持异步调用
@@ -37,8 +37,9 @@ module.exports = async function (ctx) {
     }
     // 验证码
     if (!CaptchaConfig || CaptchaConfig.disabled !== true) {
-      const rst = await authCaptchaCode(ctx)
-      if (rst[0] === false) return rst
+      const rst = await checkCaptcha(ctx)
+      if (rst[0] === false)
+        return rst
     }
     /**mongodb存储账号 */
     let found = await Account.authenticate(username, password, ctx)

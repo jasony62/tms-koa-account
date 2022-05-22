@@ -1,5 +1,5 @@
 const { Client } = require('tms-koa')
-const { authCaptchaCode } = require('../models/captcha')
+const { checkCaptcha } = require("../models/captcha")
 const { AccountConfig } = require('../config')
 const { captchaConfig: CaptchaConfig } = AccountConfig
 const PATH = require('path')
@@ -37,8 +37,9 @@ module.exports = async (ctx) => {
     }
     // 验证码
     if (!CaptchaConfig || CaptchaConfig.disabled !== true) {
-      const rst = await authCaptchaCode(ctx)
-      if (rst[0] === false) return rst
+      const rst = await checkCaptcha(ctx)
+      if (rst[0] === false)
+        return rst
     }
 
     /* 存储账号 */
