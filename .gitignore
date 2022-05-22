@@ -108,3 +108,6 @@ dist
 
 # 数据文件
 _lowdb.json
+
+# pnpm
+pnpm-lock.yaml
