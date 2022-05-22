@@ -16,6 +16,7 @@ module.exports = {
       npm: {
         disabled: false,
         id: 'tms-koa-account',
+        // module: '',
         authentication: 'models/authenticate',
         register: 'models/register',
       },
@@ -23,6 +24,15 @@ module.exports = {
   },
 }
 ```
+
+| 字段                      | 说明                                                         | 类型   | 必填 |
+| ------------------------- | ------------------------------------------------------------ | ------ | ---- |
+| client.npm.id             | 第三方模块                                                   | string | Y    |
+| client.npm.module         | 登录注册方法的独立模块文件                                   | string | Y    |
+| client.npm.authentication | 登录函数（如果没有module，应为模块文件，如果有module，为具体方法名） | string | Y    |
+| client.npm.register       | 注册函数（如果没有module，应为模块文件，如果有module，为具体方法名） | string | Y    |
+
+
 
 # tms-koa 验证码方法
 
@@ -36,7 +46,7 @@ module.exports = {
       npm: {
         disabled: false,
         id: 'tms-koa-account',
-        module: 'models/captcha',
+        module: 'models/captcha', 
         checker: 'checkCaptcha',
         generator: "createCaptcha"
       },
@@ -44,6 +54,13 @@ module.exports = {
   },
 }
 ```
+
+| 字段                  | 说明                 | 类型   | 必填 |
+| --------------------- | -------------------- | ------ | ---- |
+| captcha.npm.checker   | 验证码检查函数（……） | string | Y    |
+| captcha.npm.generator | 验证码生成函数（……） | string | Y    |
+
+
 
 # 账号管理配置文件
 
@@ -120,16 +137,16 @@ module.exports = {
 
 ```
 
-| 字段           | 说明                               | 类型     | 必填 |
-| -------------- | ---------------------------------- | -------- | ---- |
-| mongodb        | 存储账号数据的 MongoDB 设置        | object   | 否   |
-| mongodb.name   | `tms-koa`配置的`MongoDB`连接名称。 | object   | 否   |
-| mongodb.schema | 账号集合中中要保留的账号信息字段   | object   | 否   |
-| accounts       | 存储账号数据的数据                 | object[] | 否   |
-| admin          | 管理员账号                         | object   | 否   |
-| accountBeforeEach   | 登录、注册 前置步骤，如：对账号密码解密等     | string\function   | 否   |
-| authConfig     | 登录或注册时的检查                 | object   | 否   |
-| captchaConfig  | 验证码生成配置                     | object   | 否   |
+| 字段              | 说明                                      | 类型            | 必填 |
+| ----------------- | ----------------------------------------- | --------------- | ---- |
+| mongodb           | 存储账号数据的 MongoDB 设置               | object          | 否   |
+| mongodb.name      | `tms-koa`配置的`MongoDB`连接名称。        | object          | 否   |
+| mongodb.schema    | 账号集合中中要保留的账号信息字段          | object          | 否   |
+| accounts          | 存储账号数据的数据                        | object[]        | 否   |
+| admin             | 管理员账号                                | object          | 否   |
+| accountBeforeEach | 登录、注册 前置步骤，如：对账号密码解密等 | string\function | 否   |
+| authConfig        | 登录或注册时的检查                        | object          | 否   |
+| captchaConfig     | 验证码生成配置                            | object          | 否   |
 
 # authConfig 字段说明
 
@@ -156,14 +173,14 @@ module.exports = {
 
 # captchaConfig字段说明
 
-| 字段          | 说明                                                               | 类型    | 默认                       | 必填 |
-| ------------- | ------------------------------------------------------------------ | ------- | -------------------------- | ---- |
-| disabled      | 是否启用验证码                                                     | boolean | false                      | 否   |
-| storageType   | 验证码存储方式 支持 redis、lowdb                                   | string  | lowdb                      | 否   |
-| masterCaptcha | 万能验证码                                                         | string  |                            | 否   |
-| codeSize      | 验证码长度                                                         | int     | 4                          | 否   |
+| 字段          | 说明                                                         | 类型    | 默认                       | 必填 |
+| ------------- | ------------------------------------------------------------ | ------- | -------------------------- | ---- |
+| disabled      | 是否启用验证码                                               | boolean | false                      | 否   |
+| storageType   | 验证码存储方式 支持 redis、lowdb                             | string  | lowdb                      | 否   |
+| masterCaptcha | 万能验证码                                                   | string  |                            | 否   |
+| codeSize      | 验证码长度                                                   | int     | 4                          | 否   |
 | alphabetType  | 验证码字母表类型 与 alphabetType 不可公用，优先级大于 alphabetType | string  | number,upperCase,lowerCase | 否   |
-| expire        | 验证码有效期（s）                                                  | int     | 300                        | 否   |
+| expire        | 验证码有效期（s）                                            | int     | 300                        | 否   |
 
 # 密码强度校验类
 
@@ -286,17 +303,17 @@ tmsKoaAccount.startup()
 >
 > 附件参数
 >
-> ​    "alphabet":"QWERTYUIIIOPASDFGHJKL", // 验证码字母表与alphabetType不可公用，优先级大于alphabetType
+>  "alphabet":"QWERTYUIIIOPASDFGHJKL", // 验证码字母表与alphabetType不可公用，优先级大于alphabetType
 >
-> ​    "expire":200, // 过期时间 s 默认300
+>  "expire":200, // 过期时间 s 默认300
 >
-> ​    "alphabetType":"number,upperCase,lowerCase",  // 字母表生产类型 默认 数字+大写字母+小写字母
+>  "alphabetType":"number,upperCase,lowerCase",  // 字母表生产类型 默认 数字+大写字母+小写字母
 >
-> ​    "codeSize":4, //验证码长度  默认4
+>  "codeSize":4, //验证码长度  默认4
 >
-> ​    "storageType":"redis", // 验证码存储方式  lowdb | redis
+>  "storageType":"redis", // 验证码存储方式  lowdb | redis
 >
-> ​    "returnType":"text" // 返回验证码类型 text | image  默认 image
+>  "returnType":"text" // 返回验证码类型 text | image  默认 image
 
 ### 验证验证码 GET | POST
 
