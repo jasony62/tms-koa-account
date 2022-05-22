@@ -2,8 +2,8 @@ const { Client } = require('tms-koa')
 const { checkCaptcha } = require("../models/captcha")
 const { AccountConfig } = require('../config')
 const { captchaConfig: CaptchaConfig } = AccountConfig
-const PATH = require("path")
-const fs = require("fs")
+const PATH = require('path')
+const fs = require('fs')
 
 /**
  * 根据http请求中包含的信息获得用户数据，支持异步调用
@@ -15,11 +15,10 @@ module.exports = async (ctx) => {
   // 账号、密码前置处理
   if (AccountConfig.accountBeforeEach) {
     let func
-    if (typeof AccountConfig.accountBeforeEach === "string") { 
+    if (typeof AccountConfig.accountBeforeEach === 'string') {
       const funcPath = PATH.resolve(AccountConfig.accountBeforeEach)
-      if (fs.existsSync(funcPath))
-        func = require(funcPath)
-    } else if (typeof AccountConfig.accountBeforeEach === "function") {
+      if (fs.existsSync(funcPath)) func = require(funcPath)
+    } else if (typeof AccountConfig.accountBeforeEach === 'function') {
       func = AccountConfig.accountBeforeEach
     }
     if (func) {
@@ -33,7 +32,7 @@ module.exports = async (ctx) => {
     /**指定管理员账号 */
     if (admin && typeof admin === 'object') {
       if (admin.username === userInfo.username) {
-        return [false, "账号已存在"]
+        return [false, '账号已存在']
       }
     }
     // 验证码
@@ -44,11 +43,10 @@ module.exports = async (ctx) => {
     }
 
     /* 存储账号 */
-    return Account
-      .processAndCreate(userInfo)
-      .then( r => [true, r])
-      .catch( err => [false, err.toString()])
+    return Account.processAndCreate(userInfo)
+      .then((r) => [true, r])
+      .catch((err) => [false, err.toString()])
   }
 
-  return [ false ]
+  return [false]
 }

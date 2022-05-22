@@ -15,11 +15,10 @@ module.exports = async function (ctx) {
   // 账号、密码前置处理
   if (AccountConfig.accountBeforeEach) {
     let func
-    if (typeof AccountConfig.accountBeforeEach === "string") {
+    if (typeof AccountConfig.accountBeforeEach === 'string') {
       const funcPath = PATH.resolve(AccountConfig.accountBeforeEach)
-      if (fs.existsSync(funcPath))
-        func = require(funcPath)
-    } else if (typeof AccountConfig.accountBeforeEach === "function") {
+      if (fs.existsSync(funcPath)) func = require(funcPath)
+    } else if (typeof AccountConfig.accountBeforeEach === 'function') {
       func = AccountConfig.accountBeforeEach
     }
     let rst = await func(ctx)
@@ -56,5 +55,5 @@ module.exports = async function (ctx) {
     } else return [false, found[1]]
   }
 
-  return [false, "没有找到匹配的账号"]
+  return [false, '没有找到匹配的账号']
 }

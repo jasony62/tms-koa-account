@@ -57,7 +57,7 @@ module.exports = {
     name: 'master',
     database: 'tms_account',
     collection: 'account',
-    schema: {"test": {type: 'string', title: '测试'}},   // 集合中药保留的账号信息字段
+    schema: { test: { type: 'string', title: '测试' } }, // 集合中要保留的账号信息字段
   },
   // redis: {
   //   name: master
@@ -68,14 +68,14 @@ module.exports = {
       username: 'user1',
       password: 'user1',
       isAdmin: true,
-      allowMultiLogin: true
+      allowMultiLogin: true,
     },
     {
       id: 2,
       username: 'user2',
       password: 'user2',
       isAdmin: true,
-      allowMultiLogin: true
+      allowMultiLogin: true,
     },
   ],
   admin: { username: 'admin', password: 'admin' },
@@ -92,17 +92,20 @@ module.exports = {
   // },
   authConfig: {
     pwdErrMaxNum: 5, // int 密码错误次数限制 0 不限制
-    authLockDUR: 20,   // int 登录锁定时长 （秒）
+    authLockDUR: 20, // int 登录锁定时长 （秒）
     pwdStrengthCheck: {
       min: 8, // 密码最小长度
       max: 20, // 密码最大长度
-      pwdBlack: ["P@ssw0rd"], // 密码黑名单
-      containProjects: {mustCheckNum: 3, contains: ["digits", "uppercase", "lowercase", "symbols"]}, // 是否包含数字、大写字母、小写字母、特殊字符, 至少满足其中length项
+      pwdBlack: ['P@ssw0rd'], // 密码黑名单
+      containProjects: {
+        mustCheckNum: 3,
+        contains: ['digits', 'uppercase', 'lowercase', 'symbols'],
+      }, // 是否包含数字、大写字母、小写字母、特殊字符, 至少满足其中length项
       hasSpaces: false, // 是否包含空格
       hasAccount: false,
       hasKeyBoardContinuousChar: false,
       // hasKeyBoardContinuousCharSize: 4
-    }
+    },
   },
   // captchaConfig: {
   //   disabled: false,   // boolean 是否启用验证码
@@ -117,8 +120,6 @@ module.exports = {
 
 ```
 
-# ./config/account.js 配置
-
 | 字段           | 说明                               | 类型     | 必填 |
 | -------------- | ---------------------------------- | -------- | ---- |
 | mongodb        | 存储账号数据的 MongoDB 设置        | object   | 否   |
@@ -126,6 +127,7 @@ module.exports = {
 | mongodb.schema | 账号集合中中要保留的账号信息字段   | object   | 否   |
 | accounts       | 存储账号数据的数据                 | object[] | 否   |
 | admin          | 管理员账号                         | object   | 否   |
+| accountBeforeEach   | 登录、注册 前置步骤，如：对账号密码解密等     | string\function   | 否   |
 | authConfig     | 登录或注册时的检查                 | object   | 否   |
 | captchaConfig  | 验证码生成配置                     | object   | 否   |
 
@@ -154,16 +156,14 @@ module.exports = {
 
 # captchaConfig字段说明
 
-| 字段          | 说明                                                         | 类型    | 默认                       | 必填 |
-| ------------- | ------------------------------------------------------------ | ------- | -------------------------- | ---- |
-| disabled      | 是否启用验证码                                               | boolean | false                      | 否   |
-| storageType   | 验证码存储方式  支持 redis、lowdb                            | string  | lowdb                      | 否   |
-| masterCaptcha | 万能验证码                                                   | string  |                            | 否   |
-| codeSize      | 验证码长度                                                   | int     | 4                          | 否   |
-| alphabetType  | 验证码字母表类型 与alphabetType不可公用，优先级大于alphabetType | string  | number,upperCase,lowerCase | 否   |
-| expire        | 验证码有效期（s）                                            | int     | 300                        | 否   |
-
-
+| 字段          | 说明                                                               | 类型    | 默认                       | 必填 |
+| ------------- | ------------------------------------------------------------------ | ------- | -------------------------- | ---- |
+| disabled      | 是否启用验证码                                                     | boolean | false                      | 否   |
+| storageType   | 验证码存储方式 支持 redis、lowdb                                   | string  | lowdb                      | 否   |
+| masterCaptcha | 万能验证码                                                         | string  |                            | 否   |
+| codeSize      | 验证码长度                                                         | int     | 4                          | 否   |
+| alphabetType  | 验证码字母表类型 与 alphabetType 不可公用，优先级大于 alphabetType | string  | number,upperCase,lowerCase | 否   |
+| expire        | 验证码有效期（s）                                                  | int     | 300                        | 否   |
 
 # 密码强度校验类
 
@@ -234,8 +234,9 @@ strictMode: "N" // Y | N 检验大小写
 > curl -H "Content-Type: application/json" -X POST -d '{"username":"user1","password":"user1","appid":"oauth","captchaid":"aly21","code":"aabb"}' 'http://localhost:3001/auth/register'
 
 
+> curl -H "Content-Type: application/json" -X POST -d '{"username": "user1", "password":"user1", "nickname": "user1" }' 'http://localhost:3001/api/account/admin/create?access_token='
 
-# 启动tms-koa-account服务
+# 启动 tms-koa-account 服务
 
 ## 配置
 
@@ -249,9 +250,8 @@ module.exports = {
     auth: {
       // prefix: 'auth' // 接口调用url的前缀
     },
-  }
+  },
 }
-
 ```
 
 ./config/account.js
@@ -276,10 +276,7 @@ const { TmsKoaAccount } = require('tms-koa-account')
 const tmsKoaAccount = new TmsKoaAccount()
 
 tmsKoaAccount.startup()
-
 ```
-
-
 
 ## TMS_KOA_ACCOUNT API
 
