@@ -42,7 +42,7 @@ class MongodbModel {
     newAccount.password = pwdProcess.hash
     newAccount.salt = salt
 
-    return this.cl.insertOne(newAccount).then((result) => result.ops[0])
+    return this.cl.insertOne(newAccount).then( result => result )
   }
   /**
    * 创建账号
@@ -90,9 +90,7 @@ class MongodbModel {
         Object.assign(newAccount, otherData)
       }
 
-      const result = await this.create(newAccount)
-
-      return resolve(result)
+      return await this.create(newAccount).then( r => resolve(newAccount)).catch( err => reject(err))
     })
   }
 

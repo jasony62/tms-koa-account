@@ -5,6 +5,9 @@ const { captchaConfig: CaptchaConfig } = AccountConfig
 const PATH = require('path')
 const fs = require('fs')
 
+const log4js = require('@log4js-node/log4js-api')
+const logger = log4js.getLogger('tms-koa-account-register')
+
 /**
  * 根据http请求中包含的信息获得用户数据，支持异步调用
  */
@@ -22,8 +25,13 @@ module.exports = async (ctx) => {
       func = AccountConfig.accountBeforeEach
     }
     if (func) {
-      let userInfo2 = await func(ctx)
-      Object.assign(userInfo, userInfo2)
+      try {
+        let userInfo2 = await func(ctx)
+        Object.assign(userInfo, userInfo2)
+      } catch (error) {
+        logger.error(error)
+        return [false, error.message ? error.message : error.toString()]
+      }
     }
   }
 
@@ -48,5 +56,5 @@ module.exports = async (ctx) => {
       .catch((err) => [false, err.toString()])
   }
 
-  return [false]
+  return [false, "禁用账号管理功能"]
 }

@@ -11,33 +11,23 @@ module.exports = {
     disabled: false,
     name: 'master'
   },
-  accounts: [
-    {
-      id: 1,
-      username: 'user1',
-      password: 'user1',
-      isAdmin: true,
-      allowMultiLogin: true
-    },
-    {
-      id: 2,
-      username: 'user2',
-      password: 'user2',
-      isAdmin: true,
-      allowMultiLogin: true
-    },
-  ],
-  admin: { username: 'admin', password: 'admin' },
+  // accounts: [
+  //   {
+  //     id: 1,
+  //     username: 'user1',
+  //     password: 'user1',
+  //     isAdmin: true,
+  //     allowMultiLogin: true
+  //   },
+  // ],
+  // admin: { username: 'admin', password: 'admin' },
   // accountBeforeEach: "./accountBeforeEach.js",
   // accountBeforeEach: (ctx) => {
-  //   let { username, password } = ctx.request.body
-
-  //   let buff = Buffer.from(username, 'base64');
-  //   username = buff.toString('utf-8');
-  //   buff = Buffer.from(password, 'base64');
-  //   password = buff.toString('utf-8');
-
-  //   return { username, password }
+  //   const { decodeAccountV1 } = require('tms-koa-account/models/crypto')
+  //   const rst = decodeAccountV1(ctx)
+  //   if (rst[0] === false)
+  //     return Promise.reject(rst[1])
+  //   return Promise.resolve({ username: rst[1].username, password: rst[1].password })
   // },
   authConfig: {
     pwdErrMaxNum: 5, // int 密码错误次数限制 0 不限制
@@ -55,8 +45,8 @@ module.exports = {
   },
   captchaConfig: {
   //   disabled: false,   // boolean 是否启用验证码
-    storageType: "lowdb", // 验证码存储方式 仅支持 lowdb
-    masterCaptcha: "aabb",   // string 万能验证码
+  //   storageType: "redis", // 验证码存储方式 仅支持 lowdb
+  //   masterCaptcha: "aabb",   // string 万能验证码
   //   codeSize: 4,
   //   alphabet: "1234567890"
   //   alphabetType: "number,upperCase,lowerCase",

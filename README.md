@@ -28,9 +28,9 @@ module.exports = {
 | 字段                      | 说明                                                         | 类型   | 必填 |
 | ------------------------- | ------------------------------------------------------------ | ------ | ---- |
 | client.npm.id             | 第三方模块                                                   | string | Y    |
-| client.npm.module         | 登录注册方法的独立模块文件                                   | string | Y    |
-| client.npm.authentication | 登录函数（如果没有module，应为模块文件，如果有module，为具体方法名） | string | Y    |
-| client.npm.register       | 注册函数（如果没有module，应为模块文件，如果有module，为具体方法名） | string | Y    |
+| client.npm.module         | 登录注册方法的独立模块文件                                   | string | N\Y  |
+| client.npm.authentication | 登录函数（如果没有module，应为模块文件，如果有module，为具体方法名） | string | N\Y  |
+| client.npm.register       | 注册函数（如果没有module，应为模块文件，如果有module，为具体方法名） | string | N    |
 
 
 
@@ -57,8 +57,9 @@ module.exports = {
 
 | 字段                  | 说明                 | 类型   | 必填 |
 | --------------------- | -------------------- | ------ | ---- |
-| captcha.npm.checker   | 验证码检查函数（……） | string | Y    |
-| captcha.npm.generator | 验证码生成函数（……） | string | Y    |
+| captcha.npm.module    | 验证码独立模块文件   | string | N\Y  |
+| captcha.npm.checker   | 验证码检查函数（……） | string | N\Y  |
+| captcha.npm.generator | 验证码生成函数（……） | string | N    |
 
 
 
@@ -79,33 +80,23 @@ module.exports = {
   // redis: {
   //   name: master
   // }
-  accounts: [
-    {
-      id: 1,
-      username: 'user1',
-      password: 'user1',
-      isAdmin: true,
-      allowMultiLogin: true,
-    },
-    {
-      id: 2,
-      username: 'user2',
-      password: 'user2',
-      isAdmin: true,
-      allowMultiLogin: true,
-    },
-  ],
-  admin: { username: 'admin', password: 'admin' },
+  // accounts: [
+  //   {
+  //     id: 1,
+  //     username: 'user1',
+  //     password: 'user1',
+  //     isAdmin: true,
+  //     allowMultiLogin: true,
+  //   },
+  // ],
+  // admin: { username: 'admin', password: 'admin' },
   // accountBeforeEach: "./accountBeforeEach.js", // 登录、注册 前置步骤，如：对账号密码解密等
   // accountBeforeEach: (ctx) => {
-  //   let { username, password } = ctx.request.body
-
-  //   let buff = Buffer.from(username, 'base64');
-  //   username = buff.toString('utf-8');
-  //   buff = Buffer.from(password, 'base64');
-  //   password = buff.toString('utf-8');
-
-  //   return { username, password }
+  //   const { decodeAccountV1 } = require('tms-koa-account/models/crypto')
+  //   const rst = decodeAccountV1(ctx)
+  //   if (rst[0] === false)
+  //     return Promise.reject(rst[1])
+  //   return Promise.resolve({ username: rst[1].username, password: rst[1].password })
   // },
   authConfig: {
     pwdErrMaxNum: 5, // int 密码错误次数限制 0 不限制
@@ -251,8 +242,6 @@ strictMode: "N" // Y | N 检验大小写
 > curl -H "Content-Type: application/json" -X POST -d '{"username":"user1","password":"user1","appid":"oauth","captchaid":"aly21","code":"aabb"}' 'http://localhost:3001/auth/register'
 
 
-> curl -H "Content-Type: application/json" -X POST -d '{"username": "user1", "password":"user1", "nickname": "user1" }' 'http://localhost:3001/api/account/admin/create?access_token='
-
 # 启动 tms-koa-account 服务
 
 ## 配置
@@ -299,21 +288,21 @@ tmsKoaAccount.startup()
 
 ### 生成验证码 GET|POST
 
-> curl 'http://localhost:3002/auth/captcha?appid=pool&userid=aly21'
+> curl 'http://localhost:3002/auth/captcha?appid=pool&captchaid=aly21'
 >
 > 附件参数
 >
->  "alphabet":"QWERTYUIIIOPASDFGHJKL", // 验证码字母表与alphabetType不可公用，优先级大于alphabetType
+> "alphabet":"QWERTYUIIIOPASDFGHJKL", // 验证码字母表与alphabetType不可公用，优先级大于alphabetType
 >
->  "expire":200, // 过期时间 s 默认300
+> "expire":200, // 过期时间 s 默认300
 >
->  "alphabetType":"number,upperCase,lowerCase",  // 字母表生产类型 默认 数字+大写字母+小写字母
+> "alphabetType":"number,upperCase,lowerCase",  // 字母表生产类型 默认 数字+大写字母+小写字母
 >
->  "codeSize":4, //验证码长度  默认4
+> "codeSize":4, //验证码长度  默认4
 >
->  "storageType":"redis", // 验证码存储方式  lowdb | redis
+> "storageType":"redis", // 验证码存储方式  lowdb | redis
 >
->  "returnType":"text" // 返回验证码类型 text | image  默认 image
+> "returnType":"text" // 返回验证码类型 text | image  默认 image
 
 ### 验证验证码 GET | POST
 
@@ -322,3 +311,29 @@ tmsKoaAccount.startup()
 > 附件参数
 >
 > strictMode: "N"  // Y | N 检验大小写
+
+# 加密模块
+
+tms-koa-account/models/crypto.js
+## 示例
+
+```javascript
+const { Crypto, encodeAccountV1, decodeAccountV1 } = require('./models/crypto')
+
+const username = "user135"
+const password = "8811aa,,"
+// const key = "1234567890123adc"
+
+// const endcode = Crypto.encrypt.v1(password, key)
+// console.log(endcode) // [ true, 'bcuH42HRi0ZzUj7n5cQy9g==' ]
+// const decode = Crypto.decrypt.v1(endcode[1], key)
+// console.log(decode) // [ true, '8811aa,,' ]
+
+// 加密
+const endcode2 = encodeAccountV1({username, password})
+console.log(endcode2) // [true,{username: 'LFkb4u6uwxRJE3e0+ic8tg==',password: '+aYVOV0aTvgGgo+X/gTv4Q=='}]
+// 解密
+const decode2 = decodeAccountV1({request:{body:{username: endcode2[1].username, password: endcode2[1].password},query:{}}})
+console.log(decode2) // [ true, { username: 'user135', password: '8811aa,,' } ]
+```
+

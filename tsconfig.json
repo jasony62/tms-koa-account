@@ -1,0 +1,16 @@
+{
+  "esModuleInterop": true,
+  "compilerOptions": {
+    "target": "es6",
+    "module": "CommonJS",
+    "noImplicitAny": false,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "outDir": "./",
+    "rootDir": "./src",
+    "sourceMap": false,
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "**/*.spec.ts"]
+}
