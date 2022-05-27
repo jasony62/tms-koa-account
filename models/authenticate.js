@@ -5,6 +5,9 @@ const { checkCaptcha } = require("../models/captcha")
 const PATH = require("path")
 const fs = require("fs")
 
+const log4js = require('@log4js-node/log4js-api')
+const logger = log4js.getLogger('tms-koa-account-authenticate')
+
 /**
  * 根据http请求中包含的信息获得用户数据，支持异步调用
  */
@@ -21,9 +24,14 @@ module.exports = async function (ctx) {
     } else if (typeof AccountConfig.accountBeforeEach === 'function') {
       func = AccountConfig.accountBeforeEach
     }
-    let rst = await func(ctx)
-    username = rst.username
-    password = rst.password
+    try {
+      let rst = await func(ctx)
+      username = rst.username
+      password = rst.password
+    } catch (error) {
+      logger.error(error)
+      return [false, error.message ? error.message : error.toString()]
+    }
   }
 
   if (AccountConfig && AccountConfig.disabled !== true) {
