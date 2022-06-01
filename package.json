@@ -1,6 +1,6 @@
 {
   "name": "tms-koa-account",
-  "version": "0.0.4",
+  "version": "0.0.7",
   "description": "tms-koa控制器插件，账号管理。",
   "main": "index.js",
   "files": [
@@ -13,7 +13,7 @@
     "models"
   ],
   "peerDependencies": {
-    "redis": "3.1.2",
+    "redis": "4.1.0",
     "tms-koa": "^0.0.83"
   },
   "scripts": {
@@ -34,6 +34,7 @@
     "@koa/cors": "^3.3.0",
     "@koa/router": "^10.1.1",
     "@log4js-node/log4js-api": "^1.0.2",
+    "@types/node": "^17.0.35",
     "crypto-js": "^4.1.1",
     "dotenv-flow": "^3.1.0",
     "fs": "^0.0.1-security",
@@ -44,6 +45,11 @@
     "nanoid": "^3.1.20",
     "password-validator": "^5.1.1",
     "path": "^0.12.7",
-    "svg-captcha": "^1.4.0"
+    "svg-captcha": "^1.4.0",
+    "tms-koa": "0.0.82"
+  },
+  "peerDependencies": {
+    "redis": "3.1.2",
+    "tms-koa": "^0.0.80"
   }
 }
