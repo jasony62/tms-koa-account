@@ -4,14 +4,16 @@
   "description": "tms-koa控制器插件，账号管理。",
   "main": "index.js",
   "files": [
-    "app.js",
-    "router.js",
     "index.js",
     "config.js",
     "context",
     "admin",
     "models"
   ],
+  "peerDependencies": {
+    "redis": "4.1.0",
+    "tms-koa": "^0.0.83"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

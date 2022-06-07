@@ -1,5 +1,9 @@
 const { ResultData } = require('./models/response')
-const { TmsKoaAccount, Context } = require('./app')
+const authenticate = require('./models/authenticate')
+const captcha = require('./models/captcha')
+const register = require('./models/register')
+const processPwd = require('./models/processPwd')
+const crypto = require('./models/crypto')
 
 class Main {
   /**
@@ -11,4 +15,4 @@ class Main {
   }
 }
 
-module.exports = { Main, TmsKoaAccount, Context }
+module.exports = { Main, authenticate, captcha, register, processPwd, crypto }

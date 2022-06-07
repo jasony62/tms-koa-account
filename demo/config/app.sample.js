@@ -17,6 +17,13 @@ module.exports = {
       privateKey: 'tms-koa-account',
       expiresIn: 3600,
     },
+    // redis: {
+    //   host: '127.0.0.1',
+    //   port: 6379,
+    //   password: '8811aa..',
+    //   expiresIn: 3600,
+    //   prefix: 'tms-koa-account',
+    // },
     captcha: {  // 验证码
       npm: {
         disabled: false,

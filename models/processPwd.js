@@ -1,5 +1,6 @@
 const Crypto = require('crypto')
 const { customAlphabet } = require('nanoid')
+const _ = require('lodash')
 
 const AccountConfig = require('../config').AccountConfig
 
@@ -16,6 +17,7 @@ class PasswordValidator {
       hasAccount: config.hasAccount ? true : false, // 是否包含空格
       hasKeyBoardContinuousChar: config.hasKeyBoardContinuousChar ? true : false, // 是否包含空格
       hasKeyBoardContinuousCharSize: config.hasKeyBoardContinuousCharSize ? parseInt(config.hasKeyBoardContinuousCharSize) : 3, // 是否包含空格
+      matchLowercaseAndUppercase: config.matchLowercaseAndUppercase ? true : false
     }
     
     this.containProjects = []
@@ -38,7 +40,7 @@ class PasswordValidator {
   validate() {
     const PwdValidator = require('password-validator')
 
-    const { min, max, pwdBlack, hasSpaces, hasAccount, hasKeyBoardContinuousChar, hasKeyBoardContinuousCharSize = 3 } = this.config
+    const { min, max, pwdBlack, hasSpaces, hasAccount, hasKeyBoardContinuousChar, hasKeyBoardContinuousCharSize = 3, matchLowercaseAndUppercase } = this.config
     
     const schema = new PwdValidator()
     schema
@@ -46,17 +48,27 @@ class PasswordValidator {
       .is().max(max)
     if (hasSpaces === false) schema.has().not().spaces()
     if (pwdBlack.length > 0) schema.is().not().oneOf(pwdBlack)
-    if (schema.validate(this.pwd) === false) return [false, "密码格式错误或为风险密码"]
+    if (schema.validate(this.pwd) === false) return [false, "密码长度错误或为风险密码"]
 
     // 密码中不能包含账号
     if (hasAccount === false && this.options.account) {
       let account = this.options.account
       let reverseAccount = account.split('').reverse().join('')
-      if (this.pwd.includes(account) || this.pwd.includes(reverseAccount)) return [false, "密码中不能包含账号"]
+      let pwd = this.pwd
+      if (matchLowercaseAndUppercase === false) {
+        account = account.toLowerCase()
+        reverseAccount = reverseAccount.toLowerCase()
+        pwd = pwd.toLowerCase()
+      }
+      if (pwd.includes(account) || pwd.includes(reverseAccount)) return [false, "密码中不能包含账号"]
     }
     // 密码中不能包含 n 位以上的连续键盘字符
     if (hasKeyBoardContinuousChar === false) {
-      let rst = PasswordValidator.isKeyBoardContinuousChar(this.pwd, hasKeyBoardContinuousCharSize)
+      let pwd = this.pwd
+      if (matchLowercaseAndUppercase === false) {
+        pwd = pwd.toLowerCase()
+      }
+      let rst = PasswordValidator.isKeyBoardContinuousChar(pwd, hasKeyBoardContinuousCharSize)
       if (rst === true) return [false, `密码中不能包含连续${hasKeyBoardContinuousCharSize}位的键盘序字符`]
     }
     //
@@ -160,7 +172,7 @@ class PasswordProcess {
   }
 
   pwdStrengthCheck() {
-    let { pwdStrengthCheck } = AccountConfig.authConfig
+    let pwdStrengthCheck = _.get(AccountConfig, 'authConfig.pwdStrengthCheck', null)
     if (
       Object.prototype.toString.call(pwdStrengthCheck) !== '[object Object]' || 
       Object.keys(pwdStrengthCheck).length === 0

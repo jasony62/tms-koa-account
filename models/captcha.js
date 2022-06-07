@@ -18,15 +18,12 @@ class InRedis {
     this.redisClient = redisClient
   }
   //
-  key (appid, captchaid) {
+  key(appid, captchaid) {
     return `${AccountConfig.prefix || 'tms-koa-account'}:captcha:${appid}:${captchaid}`
   }
   // 连接redis
   static create() {
-    let redisContext = require('../app').Context.RedisContext
-    if (!redisContext) {
-      redisContext = require('tms-koa').Context.RedisContext
-    }
+    let redisContext = require('tms-koa').Context.RedisContext
     if (!redisContext) throw new Error('未找到redis连接')
 
     let redisConfig = loadConfig('redis')
@@ -56,14 +53,24 @@ class InRedis {
    */
   store(appid, captchaid, data, expire_in) {
     let key = this.key(appid, captchaid)
-    return new Promise((resolve) => {
-      this.redisClient.set(
-        key,
-        JSON.stringify(data),
-        () => {
-          this.expire(appid, captchaid, expire_in).then(() => resolve(expire_in))
-        }
-      )
+    return new Promise((resolve, reject) => {
+      this
+        .redisClient
+        .set(
+          key,
+          JSON.stringify(data)
+        )
+        .then(r => {
+          return this.expire(appid, captchaid, expire_in)
+        })
+        .then(r => {
+          return resolve(r)
+        })
+        .catch(err => {
+          logger.error(err)
+          return reject('redis store error : redis error')
+        })
+
     })
   }
   /**
@@ -73,10 +80,17 @@ class InRedis {
    */
   expire(appid, captchaid, expire_in) {
     let key = this.key(appid, captchaid)
-    return new Promise((resolve) => {
-      this.redisClient.expire(key, expire_in, () => {
-        resolve(expire_in)
-      })
+    return new Promise((resolve, reject) => {
+      this
+        .redisClient
+        .expire(key, expire_in)
+        .then(r => {
+          return resolve(expire_in)
+        })
+        .catch(e => {
+          logger.error(e)
+          return reject('redis expire error : redis error')
+        })
     })
   }
   /**
@@ -84,51 +98,46 @@ class InRedis {
    *
    * @param {*} clientId
    */
-  scan(appid, captchaid, cursor = '0', keys = []) {
-    return new Promise((resolve, reject) => {
-      this.redisClient.scan(
-        cursor,
-        'MATCH',
-        this.key(appid, captchaid),
-        'COUNT',
-        '500',
-        (err, res) => {
-          if (err) return reject(err)
-          else {
-            if (res[1].length) keys.push(...res[1])
-            if (res[0] !== '0') {
-              return this.scan(appid, captchaid, res[0], keys)
-                .then((r) => resolve(r))
-                .catch((e) => reject(e))
-            } else {
-              return resolve(keys)
-            }
-          }
-        }
-      )
-    })
+  async scan(appid, captchaid, keys = []) {
+    for await (
+      const key
+      of
+      this
+        .redisClient
+        .scanIterator({
+          MATCH: this.key(appid, captchaid),
+          COUNT: 500
+        })
+    ) {
+      keys.push(key)
+    }
+    return keys
   }
   /**
    * 获得对应的数据
    *
    * @param {string}
    */
-  get(appid, captchaid, ) {
+  get(appid, captchaid,) {
     let key = this.key(appid, captchaid)
     return new Promise((resolve, reject) => {
-      this.redisClient.get(key, (e, r) => {
-        if (e) {
+      this
+        .redisClient
+        .get(key)
+        .then( r => {
+          return resolve(JSON.parse(r))
+        })
+        .catch( e => {
           logger.error(e)
-          return reject('access token error:redis error')
-        } else return resolve(JSON.parse(r))
-      })
+          return reject('redis get error : redis error')
+        })
     })
   }
   /**
    *
    * @param {array} keys
    */
-  del(appid, captchaid) {
+  async del(appid, captchaid) {
     let key = this.key(appid, captchaid)
     return this.redisClient.del(key)
   }
@@ -230,7 +239,7 @@ class Captcha {
 
     if (this.masterCaptcha && this.masterCaptcha === code) { //万能验证码
       await this.removeCodeByUser(appid, captchaid)
-      return [ true, { appid, captchaid, code } ]
+      return [true, { appid, captchaid, code }]
     }
 
     let captchaCode,
@@ -239,7 +248,7 @@ class Captcha {
       const lowClient = this.getLowDbClient()
       let captchaCodes = lowClient
         .get('captchas')
-        .filter( v => {
+        .filter(v => {
           let pass = v.appid === appid && v.captchaid === captchaid
           if (pass) {
             if (strictMode === 'Y') pass = v.code === code
@@ -289,7 +298,7 @@ class Captcha {
       this
         .getLowDbClient()
         .get('captchas')
-        .remove( { appid, captchaid } )
+        .remove({ appid, captchaid })
         .write()
     } else if (this.storageType === "redis") {
       const redisClient = await this.getRedisClient()
@@ -341,7 +350,7 @@ Captcha.ins = (config = {}) => {
  */
 async function checkCaptcha(ctx) {
   let storageType, captchaid, appid, code, strictMode
-  
+
   if (ctx.request.method === "GET") {
     storageType = ctx.request.query.storageType
     appid = ctx.request.query.appid
@@ -367,20 +376,20 @@ async function checkCaptcha(ctx) {
  * 生成图形验证码
  */
 async function createCaptcha(ctx) {
-  let code, 
-    restrainCode, 
-    storageType, 
-    alphabetType, 
-    alphabet, 
-    codeSize, 
-    expire, 
-    limit, 
-    captchaid, 
-    appid, 
-    width, 
-    height, 
-    fontSize, 
-    noise, 
+  let code,
+    restrainCode,
+    storageType,
+    alphabetType,
+    alphabet,
+    codeSize,
+    expire,
+    limit,
+    captchaid,
+    appid,
+    width,
+    height,
+    fontSize,
+    noise,
     background,
     returnType = "image"
 
@@ -430,7 +439,7 @@ async function createCaptcha(ctx) {
   }
   const instance = Captcha.ins(config)
   if (restrainCode) { // 校验验证码
-    if (!captchaid || !appid) 
+    if (!captchaid || !appid)
       return [false, "参数不完整"]
     const codeInfo = await instance.checkCode(appid, captchaid, restrainCode)
     if (codeInfo[0] === false) return [false, codeInfo[1]]
@@ -445,8 +454,8 @@ async function createCaptcha(ctx) {
   }
 
   // 直接返回验证码
-  if (returnType === "text") 
-    return [ true, code ]
+  if (returnType === "text")
+    return [true, code]
 
   // 生成验证码图片
   let captchaOptions = {}
