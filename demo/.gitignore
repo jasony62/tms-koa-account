@@ -1,0 +1,7 @@
+/config/account.js
+/config/app.js
+/config/mongodb.js
+/config/log4js.js
+/config/redis.js
+
+*.local.js

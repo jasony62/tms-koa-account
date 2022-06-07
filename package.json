@@ -4,8 +4,6 @@
   "description": "tms-koa控制器插件，账号管理。",
   "main": "index.js",
   "files": [
-    "app.js",
-    "router.js",
     "index.js",
     "config.js",
     "context",

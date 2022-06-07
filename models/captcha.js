@@ -23,10 +23,7 @@ class InRedis {
   }
   // 连接redis
   static create() {
-    let redisContext = require('../app').Context.RedisContext
-    if (!redisContext) {
-      redisContext = require('tms-koa').Context.RedisContext
-    }
+    let redisContext = require('tms-koa').Context.RedisContext
     if (!redisContext) throw new Error('未找到redis连接')
 
     let redisConfig = loadConfig('redis')
