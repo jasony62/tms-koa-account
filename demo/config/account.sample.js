@@ -32,7 +32,7 @@ module.exports = {
   // authConfig: {
   //   pwdErrMaxNum: 5, // int 密码错误次数限制 0 不限制
   //   authLockDUR: 20,   // int 登录锁定时长 （秒）
-  //   pwdStrengthCheck: {
+    // pwdStrengthCheck: {
   //     min: 8, // 密码最小长度
   //     max: 20, // 密码最大长度
   //     pwdBlack: ["P@ssw0rd"], // 密码黑名单
@@ -40,6 +40,7 @@ module.exports = {
   //     hasSpaces: false, // 是否包含空格
   //     hasAccount: false,
   //     hasKeyBoardContinuousChar: false,
+  //     // KeyBoardContinuousCharAlphabet: "1234567890 qwertyuiop asdfghjkl zxcvbnm qaz wsx edc rfv tgb yhn ujm okm ijn uhb ygv tfc rdx esz",
   //     // hasKeyBoardContinuousCharSize: 4,
   //     // matchLowercaseAndUppercase: true
   //   }

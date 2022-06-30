@@ -2,7 +2,7 @@ const { ResultData } = require('./models/response')
 const authenticate = require('./models/authenticate')
 const captcha = require('./models/captcha')
 const register = require('./models/register')
-const processPwd = require('./models/processPwd')
+const processPwd = require('./models/processpwd')
 const crypto = require('./models/crypto')
 
 class Main {
