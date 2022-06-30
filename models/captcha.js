@@ -27,7 +27,7 @@ class InRedis {
     if (!redisContext) throw new Error('未找到redis连接')
 
     let redisConfig = loadConfig('redis')
-    if (!redisConfig.host || !redisConfig.port) {
+    if (!redisConfig.host) {
       let redisName =
         AccountConfig.redis && AccountConfig.redis.name
           ? AccountConfig.redis.name

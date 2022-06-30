@@ -15,8 +15,9 @@ class PasswordValidator {
       pwdBlack: Array.isArray(config.pwdBlack) ? config.pwdBlack : [], // 密码黑名单
       hasSpaces: config.hasSpaces ? true : false, // 是否包含空格
       hasAccount: config.hasAccount ? true : false, // 是否包含空格
-      hasKeyBoardContinuousChar: config.hasKeyBoardContinuousChar ? true : false, // 是否包含空格
-      hasKeyBoardContinuousCharSize: config.hasKeyBoardContinuousCharSize ? parseInt(config.hasKeyBoardContinuousCharSize) : 3, // 是否包含空格
+      hasKeyBoardContinuousChar: config.hasKeyBoardContinuousChar ? true : false, // 是否包含键盘序字符
+      hasKeyBoardContinuousCharSize: config.hasKeyBoardContinuousCharSize ? parseInt(config.hasKeyBoardContinuousCharSize) : 3, // 检查键盘序字符长度
+      KeyBoardContinuousCharAlphabet: config.KeyBoardContinuousCharAlphabet || '1234567890 qwertyuiop asdfghjkl zxcvbnm qaz wsx edc rfv tgb yhn ujm okm ijn uhb ygv tfc rdx esz', // 指定键盘序字符
       matchLowercaseAndUppercase: config.matchLowercaseAndUppercase ? true : false
     }
     
@@ -68,13 +69,13 @@ class PasswordValidator {
       if (matchLowercaseAndUppercase === false) {
         pwd = pwd.toLowerCase()
       }
-      let rst = PasswordValidator.isKeyBoardContinuousChar(pwd, hasKeyBoardContinuousCharSize)
+      let rst = this.isKeyBoardContinuousChar(pwd, hasKeyBoardContinuousCharSize)
       if (rst === true) return [false, `密码中不能包含连续${hasKeyBoardContinuousCharSize}位的键盘序字符`]
     }
     //
     if (this.containProjects) {
       let passNum = 0
-      let msg = "密码中缺少必须字符"
+      let msg = "密码中还缺少必备字符"
       for (const project of this.containProjects) {
         const schemaPj = new PwdValidator()
         schemaPj.has()[project]()
@@ -108,20 +109,21 @@ class PasswordValidator {
 
     return [true]
   }
-}
-
-// 判断键盘连续字符
-PasswordValidator.isKeyBoardContinuousChar = (pwd, keyBoardSize = 3) => {
-  const keyBoardContinuousChar = '1234567890qwertyuiopasdfghjklzxcvbnmqazwsxedcrfvtgbyhnujmokmijnuhbygvtfcrdxesz'
-  const reverseKeyBoardContinuousChar = keyBoardContinuousChar.split('').reverse().join('')
-
-  for (let i = 0; i < pwd.length - keyBoardSize + 1; i++) {
-    const pwdSizeChar = pwd.substr(i, keyBoardSize)
-    if (keyBoardContinuousChar.indexOf(pwdSizeChar) !== -1 || reverseKeyBoardContinuousChar.indexOf(pwdSizeChar) !== -1) {
-      return true
+  /**
+   * 判断键盘连续字符
+   */ 
+   isKeyBoardContinuousChar(pwd, keyBoardSize = 3) {
+    const keyBoardContinuousChar = this.config.KeyBoardContinuousCharAlphabet
+    const reverseKeyBoardContinuousChar = keyBoardContinuousChar.split('').reverse().join('')
+  
+    for (let i = 0; i < pwd.length - keyBoardSize + 1; i++) {
+      const pwdSizeChar = pwd.substr(i, keyBoardSize)
+      if (keyBoardContinuousChar.indexOf(pwdSizeChar) !== -1 || reverseKeyBoardContinuousChar.indexOf(pwdSizeChar) !== -1) {
+        return true
+      }
     }
+    return false
   }
-  return false
 }
 
 const SALT = Symbol('salt')
